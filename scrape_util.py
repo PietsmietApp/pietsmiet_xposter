@@ -41,8 +41,8 @@ def format_text(feed):
     scope = feed.scope
 
     if scope == SCOPE_NEWS:
-        text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_android/blob/develop/backend) | by /u/l3d00m'
+        text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
     else:
-        text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_android/blob/develop/backend) | by /u/l3d00m'
+        text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
 
     return text
