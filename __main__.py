@@ -14,6 +14,7 @@ from backend.rss_util import parse_feed, Feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST
 
 old_feed = None
+submission_url = ""
 
 def in_between_time(start_hour, end_hour):
     now = int(datetime.datetime.now().hour)
@@ -45,8 +46,11 @@ def smart_truncate(content, link, length=220):
 
 
 def check_for_update(scope):
+    global submission_url
+    print("Checking for: " + scope)
     new_feed = parse_feed(scope)
     if (new_feed is None):
+        print("Feed is empty, bad network?")
         return
     new_title = new_feed.title
     old_title = read(filename=scope)
@@ -62,11 +66,15 @@ def check_for_update(scope):
 
 def compare_uploadplan(new_feed, old_title):
     global old_feed
+    global submission_url
     if new_feed.title != old_title:
         old_feed = new_feed
-        submit_to_reddit(new_feed.title, format_text(new_feed))
+        print("Submitting uploadplan to reddit")
+        submission_url = submit_to_reddit(new_feed.title, format_text(new_feed))
     elif (old_feed is not None) and (new_feed.desc != old_feed.desc):
-        edit_submission(format_text(new_feed))
+        print("desc is different")
+        old_feed = new_feed
+        edit_submission(format_text(new_feed), submission_url)
         
 
 check_for_update(SCOPE_PIETCAST)

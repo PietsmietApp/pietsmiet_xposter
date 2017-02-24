@@ -3,7 +3,6 @@ from praw.models import Submission
 from backend.api_keys import reddit_username, reddit_password, reddit_user_agent, reddit_client_id, reddit_client_secret
 
 subreddit = "pietsmiet"
-submission_url = ""
 
 reddit_auth = praw.Reddit(client_id=reddit_client_id,
                      client_secret=reddit_client_secret,
@@ -26,10 +25,12 @@ def submit_to_reddit(title, text):
     # Submit the post
     submission_url = reddit_auth.subreddit(subreddit).submit(title, selftext=text, resubmit=False, send_replies=False).shortlink
     print(submission_url)
+    return submission_url
 
 
-def edit_submission(text):
+def edit_submission(text, submission_url):
     if (submission_url == ""):
+        print("Submission url is empty")
         return
     submission = Submission(reddit_auth, url=submission_url)
     submission.edit(text)
