@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
 from backend.firebase_util import send_fcm, put_feed_into_db
-from backend.reddit_util import submit_to_reddit, edit_submission
+from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text
 from backend.rss_util import parse_feed, Feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST
@@ -57,10 +57,11 @@ def check_for_update(scope):
     if (scope == SCOPE_UPLOADPLAN):
         compare_uploadplan(new_feed, old_title)
     if new_title != old_title:
+        print("New item in " + scope)
         write(new_title, scope)            
-        #elif scope == SCOPE_NEWS:
-        #    new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
-        #    submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
+        if scope == SCOPE_NEWS:
+            new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
+            submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
         put_feed_into_db(new_feed)
         send_fcm(new_feed)
 
@@ -72,12 +73,12 @@ def compare_uploadplan(new_feed, old_title):
         print("Submitting uploadplan to reddit")
         submission_url = submit_to_reddit(new_feed.title, format_text(new_feed))
     elif (old_feed is not None) and (new_feed.desc != old_feed.desc):
-        print("desc is different")
+        print("Desc is different")
         old_feed = new_feed
         edit_submission(format_text(new_feed), submission_url)
         
 
-check_for_update(SCOPE_PIETCAST)
+#check_for_update(SCOPE_PIETCAST)
 #check_for_update(SCOPE_NEWS)
 check_for_update(SCOPE_UPLOADPLAN)
 
@@ -90,12 +91,14 @@ while 1:
     i = 0
     if in_between_time(10, 15):
         check_for_update(SCOPE_UPLOADPLAN)
+        
+    if in_between_time(2, 3):
+        delete_submission(submission_url)
 
-    if (i == 4) or (i == 9) or (i == 14):
-        check_for_update(SCOPE_PIETCAST)
-        #check_for_update(SCOPE_NEWS)
-    if i == 14:
-        i = 0
+    #if (i == 4):
+    #    check_for_update(SCOPE_PIETCAST)
+    #    check_for_update(SCOPE_NEWS)
+    #    i = 0
 
     i += 1
 

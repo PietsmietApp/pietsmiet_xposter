@@ -30,9 +30,15 @@ def submit_to_reddit(title, text):
 
 def edit_submission(text, submission_url):
     if (submission_url == ""):
-        print("Submission url is empty")
+        print("EDIT: Submission url is empty")
         return
     submission = Submission(reddit_auth, url=submission_url)
     submission.edit(text)
     print("Submission edited")
     
+def delete_submission(submission_url):
+    if (submission_url == ""):
+        return
+    submission = Submission(reddit_auth, url=submission_url)
+    submission.delete()
+    print("Submission deleted")
