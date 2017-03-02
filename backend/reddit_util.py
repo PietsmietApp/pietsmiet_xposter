@@ -38,6 +38,7 @@ def edit_submission(text, submission_url):
     
 def delete_submission(submission_url):
     if (submission_url == ""):
+        print("DELETE: Submission url is empty")
         return
     submission = Submission(reddit_auth, url=submission_url)
     submission.delete()

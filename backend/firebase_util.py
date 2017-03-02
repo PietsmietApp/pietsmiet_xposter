@@ -18,8 +18,8 @@ def put_feed_into_db(feed):
         firebase_db.put(url="/" + scope, name="link", data=feed.link)
         firebase_db.put(url="/" + scope, name="title", data=feed.title)
         firebase_db.put(url="/" + scope, name="date", data=feed.date)
-    except Exception:
-        print('Error putting feed into fb db')
+    except Exception as e:
+        print('Error putting feed into fb db' + format(e))
 
 
 def send_fcm(feed):
@@ -29,6 +29,6 @@ def send_fcm(feed):
 		"message" : feed.desc
     }
     try:
-        firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=scope)
-    except Exception:
-        print("Error making new fcm")
+        firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=feed.scope)
+    except Exception as e:
+        print("Error making new fcm" + format(e))

@@ -59,9 +59,9 @@ def check_for_update(scope):
     if new_title != old_title:
         print("New item in " + scope)
         write(new_title, scope)            
-        if scope == SCOPE_NEWS:
-            new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
-            submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
+        #if scope == SCOPE_NEWS:
+            #new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
+            #submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
         put_feed_into_db(new_feed)
         send_fcm(new_feed)
 
@@ -78,27 +78,28 @@ def compare_uploadplan(new_feed, old_title):
         edit_submission(format_text(new_feed), submission_url)
         
 
-#check_for_update(SCOPE_PIETCAST)
-#check_for_update(SCOPE_NEWS)
+check_for_update(SCOPE_PIETCAST)
+check_for_update(SCOPE_NEWS)
 check_for_update(SCOPE_UPLOADPLAN)
+i = 0
 
 while 1:
-    # Check for updates:
+    # Check for updates
     # 1) PietCast
     # 2) Between 9am and 1pm for Uploadplan
     # 3) News on pietsmiet.de
     # (I'm two lazy to do it asynchronous)
-    i = 0
     if in_between_time(10, 15):
         check_for_update(SCOPE_UPLOADPLAN)
         
     if in_between_time(2, 3):
+        print("Deleting submission...")
         delete_submission(submission_url)
 
-    #if (i == 4):
-    #    check_for_update(SCOPE_PIETCAST)
-    #    check_for_update(SCOPE_NEWS)
-    #    i = 0
+    if (i == 16):
+        check_for_update(SCOPE_PIETCAST)
+        check_for_update(SCOPE_NEWS)
+        i = 0
 
     i += 1
 
