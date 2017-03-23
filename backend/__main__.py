@@ -1,4 +1,5 @@
 #! /usr/bin/python3
+# -*- coding: utf-8 -*-
 import time
 import datetime
 import sys
@@ -25,13 +26,13 @@ def in_between_time(start_hour, end_hour):
 
 
 def write(text, filename):
-    with open(filename, "w+") as text_file:
+    with open(filename, "w+", encoding='utf-8') as text_file:
         print(text, file=text_file)
 
 
 def read(filename):
     try:
-        with open(filename, "r") as text_file:
+        with open(filename, "r", encoding='utf-8') as text_file:
             return text_file.read().rstrip()
     except Exception:
         print("No file created yet? ENOENT")
