@@ -27,15 +27,16 @@ def send_fcm(feed):
     desc = feed.desc
     if feed.scope == "uploadplan":
         match = re.search("<strong>Upload.*?< ?br ?\/? ?>(.*?)<\/p>", feed.desc)
-        print(feed.desc)
         if match != None:
             desc = match.group(1)
     data_message = {
         "title" : feed.title,
         "topic" : feed.scope,
-		"message" : desc
+		"message" : desc,
+        "link" : feed.link
     }
     try:
         firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=feed.scope)
+        print("Send fcm for " + feed.scope)
     except Exception as e:
         print("Error making new fcm" + format(e))

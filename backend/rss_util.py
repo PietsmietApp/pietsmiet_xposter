@@ -1,5 +1,5 @@
 import feedparser
-from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS
+from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS, SCOPE_VIDEO
 from backend.scrape_util import scrape_site
 
 
@@ -28,6 +28,8 @@ def parse_feed(scope):
         
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         desc = scrape_site(link)
+    elif scope == SCOPE_VIDEO:
+        desc = None
     else:
         desc = d.entries[0].description
 

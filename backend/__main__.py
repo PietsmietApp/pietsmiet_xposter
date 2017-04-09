@@ -12,7 +12,7 @@ from backend.firebase_util import send_fcm, put_feed_into_db
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text
 from backend.rss_util import parse_feed, Feed
-from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST
+from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 
 old_feed = None
 submission_url = ""
@@ -92,7 +92,9 @@ while 1:
     # (I'm two lazy to do it asynchronous)
     if in_between_time(10, 15):
         check_for_update(SCOPE_UPLOADPLAN)
-        
+    
+    if in_between_time(11, 23):
+        check_for_update(SCOPE_VIDEO)
     if in_between_time(2, 3):
         print("Deleting submission...")
         delete_submission(submission_url)
@@ -104,5 +106,5 @@ while 1:
 
     i += 1
 
-    time.sleep(1800)
+    time.sleep(900)
 

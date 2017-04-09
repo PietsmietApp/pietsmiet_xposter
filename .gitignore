@@ -92,3 +92,4 @@ backend/api_keys.py
 backend/uploadplan
 backend/pietcast
 backend/news
+backend/video
