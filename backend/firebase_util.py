@@ -1,6 +1,7 @@
 from backend.api_keys import fcm_key, fb_db_key
 from pyfcm import FCMNotification
 from firebase import firebase
+import re
 
 firebase_fcm = FCMNotification(api_key=fcm_key)
 firebase_db = firebase.FirebaseApplication('https://pietsmiet-de5ff.firebaseio.com/', authentication=fb_db_key)
@@ -23,10 +24,16 @@ def put_feed_into_db(feed):
 
 
 def send_fcm(feed):
+    desc = feed.desc
+    if feed.scope == "uploadplan":
+        match = re.search("<strong>Upload.*?< ?br ?\/? ?>(.*?)<\/p>", feed.desc)
+        print(feed.desc)
+        if match != None:
+            desc = match.group(1)
     data_message = {
         "title" : feed.title,
         "topic" : feed.scope,
-		"message" : feed.desc
+		"message" : desc
     }
     try:
         firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=feed.scope)
