@@ -24,15 +24,26 @@ def put_feed_into_db(feed):
 
 
 def send_fcm(feed):
-    desc = feed.desc
+    message = feed.desc
+    title = feed.title
     if feed.scope == "uploadplan":
+        #Only send the actual uploadplan
         match = re.search("<strong>Upload.*?< ?br ?\/? ?>(.*?)<\/p>", feed.desc)
         if match != None:
-            desc = match.group(1)
+            message = match.group(1)
+    elif feed.scope == "video":
+        # Only send the title of the video
+        title = "Neues Video (pietsmiet.de)"
+        message = feed.title
+    elif feed.scope == "news":
+        # Only send the title of the news item
+        title = "News (pietsmiet.de)"
+        message = feed.title
+        
     data_message = {
-        "title" : feed.title,
+        "title" : title,
         "topic" : feed.scope,
-		"message" : desc,
+		"message" : message,
         "link" : feed.link
     }
     try:

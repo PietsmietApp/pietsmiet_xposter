@@ -22,16 +22,12 @@ def parse_feed(scope):
     try:
         title = d.entries[0].title
         link = d.entries[0].link
+        desc = d.entries[0].description
         date = d.entries[0].published
     except IndexError:
         return None;
         
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         desc = scrape_site(link)
-    elif scope == SCOPE_VIDEO:
-        desc = title
-        title = "Neues Video (pietsmiet.de)"
-    else:
-        desc = d.entries[0].description
 
     return Feed(title, link, date, desc, scope)
