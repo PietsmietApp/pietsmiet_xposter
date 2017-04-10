@@ -4,109 +4,76 @@ import time
 import datetime
 import sys
 import os
+import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
 from backend.firebase_util import send_fcm, put_feed_into_db
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
-from backend.scrape_util import format_text
-from backend.rss_util import parse_feed, Feed
+from backend.scrape_util import format_text, smart_truncate
+from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
-
-old_feed = None
-submission_url = ""
-
-def in_between_time(start_hour, end_hour):
-    now = int(datetime.datetime.now().hour)
-    if start_hour <= end_hour:
-        return start_hour <= now < end_hour
-    else:  # over midnight e.g., 23-04
-        return start_hour <= now or now < end_hour
-
-
-def write(text, filename):
-    with open(filename, "w+", encoding='utf-8') as text_file:
-        print(text, file=text_file)
-
-
-def read(filename):
-    try:
-        with open(filename, "r", encoding='utf-8') as text_file:
-            return text_file.read().rstrip()
-    except Exception:
-        print("No file created yet? ENOENT")
-        return ""
+from backend.querys import write_feed, get_last_feed, insert_reddit_url, get_reddit_url
 		
-		
-def smart_truncate(content, link, length=220):
-    if not len(content) <= length:
-        content = content[:length].rsplit(' ', 1)[0] + '...  '
-		
-    return content + "<a href=\"" + link + "\">Auf pietsmiet.de weiterlesen <span>→</span></a>"
-
+force = False
 
 def check_for_update(scope):
-    global submission_url
+    global force
     print("Checking for: " + scope)
     new_feed = parse_feed(scope)
     if (new_feed is None):
         print("Feed is empty, bad network?")
         return
-    new_title = new_feed.title
-    old_title = read(filename=scope)
+    old_feed = get_last_feed(scope)
     if (scope == SCOPE_UPLOADPLAN):
-        compare_uploadplan(new_feed, old_title)
-    if new_title != old_title:
+        compare_uploadplan(new_feed, old_feed)
+    if (force) or (old_feed is None) or (new_feed.title != old_feed.title):
         print("New item in " + scope)
-        write(new_title, scope)            
+        write_feed(new_feed)            
         #if scope == SCOPE_NEWS:
             #new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
             #submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
         put_feed_into_db(new_feed)
         send_fcm(new_feed)
 
-def compare_uploadplan(new_feed, old_title):
-    global old_feed
-    global submission_url
-    if new_feed.title != old_title:
-        old_feed = new_feed
+def compare_uploadplan(new_feed, old_feed):
+    global force    
+    if (force) or (old_feed is None) or (new_feed.title != old_feed.title):
         print("Submitting uploadplan to reddit")
         submission_url = submit_to_reddit(new_feed.title, format_text(new_feed))
-    elif (old_feed is not None) and (new_feed.desc != old_feed.desc):
+        insert_reddit_url(submission_url)
+    elif new_feed.desc != old_feed.desc:
         print("Desc is different")
-        old_feed = new_feed
         edit_submission(format_text(new_feed), submission_url)
         
 
-check_for_update(SCOPE_PIETCAST)
-check_for_update(SCOPE_NEWS)
-check_for_update(SCOPE_UPLOADPLAN)
-i = 0
+parser = argparse.ArgumentParser()
+parser.add_argument("-s", "--scope", required=True)
+parser.add_argument("-f", "--force", required=False, default=False, action='store_true')
+args = vars(parser.parse_args())
 
-while 1:
-    # Check for updates
-    # 1) Every 15 minutes between 9:00 and 15:00 for Uploadplan
-    # 2) Every 15 minutes between 11:00 and 23:00 for Videos
-    # 3) Every 2 hours between 11:00 and 23:00 for news on pietsmiet.de
-    # 4) Every 2 hours between 11:00 and 23:00 for pietcasts
+if args['force']:
+    force = True
 
-    if in_between_time(9, 15):
-        check_for_update(SCOPE_UPLOADPLAN)
+if args['scope'] == 'uploadplan':
+    check_for_update(SCOPE_UPLOADPLAN)
+
+if args['scope'] == 'video':   
+    check_for_update(SCOPE_VIDEO)
     
-    if in_between_time(11, 23):
-        check_for_update(SCOPE_VIDEO)
-        
-    if in_between_time(2, 3):
+if args['scope'] == 'pietcast':
+    check_for_update(SCOPE_PIETCAST)
+
+if args['scope'] == 'news':
+    check_for_update(SCOPE_NEWS)
+
+if args['scope'] == 'delete':
+    url = get_reddit_url()
+    if url is not None:
         print("Deleting submission...")
-        delete_submission(submission_url)
-
-    if (i == 8) and (in_between_time(11, 23)):
-        check_for_update(SCOPE_PIETCAST)
-        check_for_update(SCOPE_NEWS)
-        i = 0
-
-    i += 1
-
-    time.sleep(900)
-
+        delete_submission(url)
+    else:
+        print("Couldn't delete submission, no URL in db")
+        
+print("finished")
