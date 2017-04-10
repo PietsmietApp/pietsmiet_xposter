@@ -37,6 +37,6 @@ def send_fcm(feed):
     }
     try:
         firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=feed.scope)
-        print("Send fcm for " + feed.scope)
+        print("Sent fcm for " + feed.scope)
     except Exception as e:
         print("Error making new fcm" + format(e))

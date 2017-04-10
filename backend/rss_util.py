@@ -29,7 +29,8 @@ def parse_feed(scope):
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         desc = scrape_site(link)
     elif scope == SCOPE_VIDEO:
-        desc = None
+        desc = title
+        title = "Neues Video (pietsmiet.de)"
     else:
         desc = d.entries[0].description
 

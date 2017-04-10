@@ -86,20 +86,22 @@ i = 0
 
 while 1:
     # Check for updates
-    # 1) PietCast
-    # 2) Between 9am and 1pm for Uploadplan
-    # 3) News on pietsmiet.de
-    # (I'm two lazy to do it asynchronous)
-    if in_between_time(10, 15):
+    # 1) Every 15 minutes between 9:00 and 15:00 for Uploadplan
+    # 2) Every 15 minutes between 11:00 and 23:00 for Videos
+    # 3) Every 2 hours between 11:00 and 23:00 for news on pietsmiet.de
+    # 4) Every 2 hours between 11:00 and 23:00 for pietcasts
+
+    if in_between_time(9, 15):
         check_for_update(SCOPE_UPLOADPLAN)
     
     if in_between_time(11, 23):
         check_for_update(SCOPE_VIDEO)
+        
     if in_between_time(2, 3):
         print("Deleting submission...")
         delete_submission(submission_url)
 
-    if (i == 16):
+    if (i == 8) and (in_between_time(11, 23)):
         check_for_update(SCOPE_PIETCAST)
         check_for_update(SCOPE_NEWS)
         i = 0
