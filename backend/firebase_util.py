@@ -37,6 +37,7 @@ def get_feed(scope):
         reddit_url = None
         if 'reddit_url' in result:
             reddit_url = result['reddit_url']
+            
         return Feed(scope=scope, 
             title=result['title'], 
             desc=result['desc'], 

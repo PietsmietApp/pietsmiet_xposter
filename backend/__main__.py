@@ -19,7 +19,6 @@ force = False
 debug = False
 
 def check_for_update(scope):
-    global force
     print("Checking for: " + scope)
     new_feed = parse_feed(scope)
     if (new_feed is None):
@@ -37,8 +36,7 @@ def check_for_update(scope):
     if (scope == SCOPE_UPLOADPLAN): # or (scope == SCOPE_NEWS)
         compare_uploadplan(new_feed, old_feed)
 
-def compare_uploadplan(new_feed, old_feed):
-    global force    
+def compare_uploadplan(new_feed, old_feed):   
     if (force) or (new_feed.title != old_feed.title):
         print("Submitting uploadplan to reddit")
         #if new_feed.scope == SCOPE_NEWS:
@@ -49,8 +47,10 @@ def compare_uploadplan(new_feed, old_feed):
         put_reddit_url(submission_url)
     elif new_feed.desc != old_feed.desc:
         print("Desc is different")
-        if (new_feed.reddit_url is not None):
-            edit_submission(format_text(new_feed), new_feed.reddit_url)
+        new_feed.reddit_url = old_feed.reddit_url
+        put_feed(new_feed)
+        if (old_feed.reddit_url is not None):
+            edit_submission(format_text(new_feed), old_feed.reddit_url)
         else:
             print("No reddit url provided")
         
