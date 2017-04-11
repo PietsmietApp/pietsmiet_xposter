@@ -1,5 +1,14 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+
+# Current cron entries:
+# */15 9-12 * * * python3 /home/pi/backend -s uploadplan >/home/pi/crontab.log 2>&1
+# 0 12-17 * * * python3 /home/pi/backend -s uploadplan >/home/pi/crontab.log 2>&1
+# 2,32 11-22 * * * python3 /home/pi/backend -s video >/home/pi/crontab.log 2>&1
+# 0 11-24/3 * * * python3 /home/pi/backend -s news >/home/pi/crontab.log 2>&1
+# 0 11-24/3 * * * python3 /home/pi/backend -s pietcast >/home/pi/crontab.log 2>&1
+#
+# => durschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
 import time
 import datetime
 import sys
@@ -31,8 +40,7 @@ def check_for_update(scope):
     if (force) or (new_feed.title != old_feed.title):
         print("New item in " + scope)       
         put_feed(new_feed)
-        if debug is False:
-            send_fcm(new_feed)
+        send_fcm(new_feed, debug)
     if (scope == SCOPE_UPLOADPLAN): # or (scope == SCOPE_NEWS)
         compare_uploadplan(new_feed, old_feed)
 

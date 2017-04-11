@@ -1,11 +1,11 @@
-from backend.api_keys import fcm_key, fb_db_key
+from backend.api_keys import fcm_key, fb_db_key, fb_db_url
 from backend.rss_util import Feed
 from pyfcm import FCMNotification
 from firebase import firebase
 import re
 
 firebase_fcm = FCMNotification(api_key=fcm_key)
-firebase_db = firebase.FirebaseApplication('https://pietsmiet-de5ff.firebaseio.com/', authentication=fb_db_key)
+firebase_db = firebase.FirebaseApplication(fb_db_url, authentication=fb_db_key)
 
 
 def put_feed(feed):
@@ -63,7 +63,7 @@ def get_reddit_url():
     return result
     
 
-def send_fcm(feed):
+def send_fcm(feed, debug=False):
     message = feed.desc
     title = feed.title
     if feed.scope == "uploadplan":
@@ -86,8 +86,11 @@ def send_fcm(feed):
 		"message" : message,
         "link" : feed.link
     }
+    topic = feed.scope
+    if debug is True:
+        topic = "test"
     try:
-        firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=feed.scope)
-        print("Sent fcm for " + feed.scope)
+        firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=topic)
+        print("Sent fcm for " + feed.scope + " to topic/" + topic)
     except Exception as e:
         print("Error making new fcm" + format(e))
