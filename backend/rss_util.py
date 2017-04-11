@@ -4,12 +4,13 @@ from backend.scrape_util import scrape_site
 
 
 class Feed(object):
-    def __init__(self, title, link, date, desc, scope):
+    def __init__(self, title, scope, link=None, date=None, desc=None, reddit_url=None):
         self.title = title
         self.link = link
         self.date = date
         self.desc = desc
         self.scope = scope
+        self.reddit_url = reddit_url
 
 
 def parse_feed(scope):
@@ -30,4 +31,4 @@ def parse_feed(scope):
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         desc = scrape_site(link)
 
-    return Feed(title, link, date, desc, scope)
+    return Feed(title=title, link=link, date=date, desc=desc, scope=scope)

@@ -1,4 +1,5 @@
 from backend.api_keys import fcm_key, fb_db_key
+from backend.rss_util import Feed
 from pyfcm import FCMNotification
 from firebase import firebase
 import re
@@ -7,7 +8,7 @@ firebase_fcm = FCMNotification(api_key=fcm_key)
 firebase_db = firebase.FirebaseApplication('https://pietsmiet-de5ff.firebaseio.com/', authentication=fb_db_key)
 
 
-def put_feed_into_db(feed):
+def put_feed(feed):
     """
     Stores the content of the Feed object in firebase database
     :param feed: the feed object
@@ -22,6 +23,44 @@ def put_feed_into_db(feed):
     except Exception as e:
         print('Error putting feed into fb db' + format(e))
 
+        
+def get_feed(scope):
+    try:
+        result = firebase_db.get("/" + scope, None)
+    except Exception as e:
+        print('Error getting feed from fb db' + format(e))
+        return None
+        
+    if (result is None):
+        return Feed(scope=scope, title='none_title')
+    else:
+        reddit_url = None
+        if 'reddit_url' in result:
+            reddit_url = result['reddit_url']
+        return Feed(scope=scope, 
+            title=result['title'], 
+            desc=result['desc'], 
+            link=result['link'], 
+            date=result['date'],
+            reddit_url=reddit_url)
+        
+        
+def put_reddit_url(url):
+    try:
+        firebase_db.put(url="/uploadplan", name="reddit_url", data=url)
+    except Exception as e:
+        print('Error putting reddit url into fb db' + format(e))
+        
+
+def get_reddit_url():
+    try:
+        result = firebase_db.get("/uploadplan", "reddit_url")
+    except Exception as e:
+        print('Error getting feed from fb db' + format(e))
+        result = None
+        
+    return result
+    
 
 def send_fcm(feed):
     message = feed.desc

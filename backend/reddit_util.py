@@ -11,12 +11,14 @@ reddit_auth = praw.Reddit(client_id=reddit_client_id,
                      username=reddit_username)
 
 
-def submit_to_reddit(title, text):
+def submit_to_reddit(title, text, debug=False):
     """
     Posts a link to the given subreddit
     :param title: Title of the reddit post
     :param text: Text to add to the reddit self post
     """
+    if debug is True:
+        subreddit="l3d00m"
 
     if (text == '') or (title == ''):
         print("Not submitting to reddit, null text or title")
