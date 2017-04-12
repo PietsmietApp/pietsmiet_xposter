@@ -7,6 +7,7 @@
 # 2,32 11-22 * * * python3 /home/pi/backend -s video >/home/pi/crontab.log 2>&1
 # 0 11-24/3 * * * python3 /home/pi/backend -s news >/home/pi/crontab.log 2>&1
 # 0 11-24/3 * * * python3 /home/pi/backend -s pietcast >/home/pi/crontab.log 2>&1
+# 0 3 * * * python3 /home/pi/backend -s delete >/home/pi/crontab.log 2>&1
 #
 # => durschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
 import time

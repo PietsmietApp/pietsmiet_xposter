@@ -2,8 +2,6 @@ import praw
 from praw.models import Submission
 from backend.api_keys import reddit_username, reddit_password, reddit_user_agent, reddit_client_id, reddit_client_secret
 
-subreddit = "pietsmiet"
-
 reddit_auth = praw.Reddit(client_id=reddit_client_id,
                      client_secret=reddit_client_secret,
                      password=reddit_password,
@@ -19,6 +17,8 @@ def submit_to_reddit(title, text, debug=False):
     """
     if debug is True:
         subreddit="l3d00m"
+    else:
+        subreddit = "pietsmiet"
 
     if (text == '') or (title == ''):
         print("Not submitting to reddit, null text or title")
