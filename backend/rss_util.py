@@ -27,7 +27,7 @@ def parse_feed(scope):
         date = d.entries[0].published
     except IndexError:
         return None;
-        
+
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         desc = scrape_site(link)
 

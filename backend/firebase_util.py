@@ -23,35 +23,35 @@ def put_feed(feed):
     except Exception as e:
         print('Error putting feed into fb db' + format(e))
 
-        
+
 def get_feed(scope):
     try:
         result = firebase_db.get("/" + scope, None)
     except Exception as e:
         print('Error getting feed from fb db' + format(e))
         return None
-        
-    if (result is None):
+
+    if result is None:
         return Feed(scope=scope, title='none_title')
     else:
         reddit_url = None
         if 'reddit_url' in result:
             reddit_url = result['reddit_url']
-            
-        return Feed(scope=scope, 
-            title=result['title'], 
-            desc=result['desc'], 
-            link=result['link'], 
-            date=result['date'],
-            reddit_url=reddit_url)
-        
-        
+
+        return Feed(scope=scope,
+                    title=result['title'],
+                    desc=result['desc'],
+                    link=result['link'],
+                    date=result['date'],
+                    reddit_url=reddit_url)
+
+
 def put_reddit_url(url):
     try:
         firebase_db.put(url="/uploadplan", name="reddit_url", data=url)
     except Exception as e:
         print('Error putting reddit url into fb db' + format(e))
-        
+
 
 def get_reddit_url():
     try:
@@ -59,17 +59,17 @@ def get_reddit_url():
     except Exception as e:
         print('Error getting feed from fb db' + format(e))
         result = None
-        
+
     return result
-    
+
 
 def send_fcm(feed, debug=False):
     message = feed.desc
     title = feed.title
     if feed.scope == "uploadplan":
-        #Only send the actual uploadplan
+        # Only send the actual uploadplan
         match = re.search("<strong>Upload.*?< ?br ?\/? ?>(.*?)<\/p>", feed.desc)
-        if match != None:
+        if match is not None:
             message = match.group(1)
     elif feed.scope == "video":
         # Only send the title of the video
@@ -79,12 +79,12 @@ def send_fcm(feed, debug=False):
         # Only send the title of the news item
         title = "News (pietsmiet.de)"
         message = feed.title
-        
+
     data_message = {
-        "title" : title,
-        "topic" : feed.scope,
-		"message" : message,
-        "link" : feed.link
+        "title": title,
+        "topic": feed.scope,
+        "message": message,
+        "link": feed.link
     }
     topic = feed.scope
     if debug is True:
