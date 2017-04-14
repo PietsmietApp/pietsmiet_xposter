@@ -33,17 +33,34 @@ def get_feed(scope):
 
     if result is None:
         return Feed(scope=scope, title='none_title')
+        
+    title = None
+    desc = None
+    link = None
+    date = None
+    reddit_url = None
+    if 'title' in result:
+        title = result['title']
     else:
-        reddit_url = None
-        if 'reddit_url' in result:
-            reddit_url = result['reddit_url']
-
-        return Feed(scope=scope,
-                    title=result['title'],
-                    desc=result['desc'],
-                    link=result['link'],
-                    date=result['date'],
-                    reddit_url=reddit_url)
+        print("Warning: Title not in db!")
+    if 'desc' in result:
+        desc = result['desc']
+    else:
+        print("Warning: Desc not in db!")
+    if 'link' in result:
+        link = result['link']
+    else:
+        print("Warning: Link not in db!")
+    if 'date' in result:
+        date = result['date']
+    if 'reddit_url' in result:
+        reddit_url = result['reddit_url']
+    return Feed(scope=scope,
+                title=title,
+                desc=desc,
+                link=link,
+                date=date,
+                reddit_url=reddit_url)
 
 
 def put_reddit_url(url):
@@ -67,8 +84,9 @@ def send_fcm(feed, debug=False):
     message = feed.desc
     title = feed.title
     if feed.scope == "uploadplan":
+        print(feed.desc)
         # Only send the actual uploadplan
-        match = re.search("<.*?>Upload-Plan am.*?<p>(.*?)<\/p>", feed.desc)
+        match = re.search("<.*?>Upload-Plan am.*?<p>(.*?)<\/p>", feed.desc, re.DOTALL)
         if match is not None:
             message = match.group(1)
     elif feed.scope == "video":

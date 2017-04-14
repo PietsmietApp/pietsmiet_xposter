@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 import html2text
 from backend.scopes import SCOPE_NEWS
+import re
 
 
 def scrape_site(url):
@@ -25,7 +26,9 @@ def scrape_site(url):
         to_return = ""
         for thing in results:
             to_return += str(thing)
-        return to_return
+        replaced = re.sub(r"(< ?br ?\/?>){2}", "<br/>", to_return)
+        final_replaced = re.sub(r"<p ?>\s?</ ?p>", " ", replaced)
+        return final_replaced
     except Exception:
         return None
 
