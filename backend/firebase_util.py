@@ -86,7 +86,7 @@ def send_fcm(feed, debug=False):
     if feed.scope == "uploadplan":
         print(feed.desc)
         # Only send the actual uploadplan
-        match = re.search("<.*?>Upload-Plan am.*?<p>(.*?)<\/p>", feed.desc, re.DOTALL)
+        match = re.search("(?:<p>)?(?:<strong>)?Upload-Plan am.*?(?:</strong>)?(?:<p>|<br ?/?>)(.*?)<\/p>", feed.desc, re.DOTALL)
         if match is not None:
             message = match.group(1)
     elif feed.scope == "video":
