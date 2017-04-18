@@ -16,7 +16,7 @@ class Feed(object):
         self.reddit_url = reddit_url
 
 
-def parse_feed(scope):
+def parse_feed(scope, limit=True):
     """
     Get's a feed from the scope url and parses it
     :param scope: For the url and the scope in the object
@@ -24,7 +24,11 @@ def parse_feed(scope):
     """
     d = feedparser.parse(get_url_for_scope(scope))
     new_feeds = []
-    for x in range(0, 3):
+    if limit:
+        max_posts = 3
+    else:
+        max_posts = 50
+    for x in range(0, max_posts):
         try:
             title = d.entries[x].title
             link = d.entries[x].link
@@ -37,6 +41,7 @@ def parse_feed(scope):
 
             new_feeds.append(Feed(title=title, link=link, date=date, desc=desc, scope=scope))
         except IndexError:
-            print("Index does not exist")
+            if limit:
+                print("Index does not exist")
 
     return new_feeds

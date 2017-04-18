@@ -13,6 +13,7 @@
 import argparse
 import os
 import sys
+import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -78,10 +79,22 @@ def check_for_update(scope):
         i = i + 1
 
 
+def fetch_and_store(scope):
+    new_feeds = parse_feed(scope, limit=False)
+    print(str(len(new_feeds)) + " Items in " + scope + " gefunden.")
+    for feed in new_feeds:
+        if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
+            feed.desc = scrape_site(feed.link)
+            time.sleep(3)
+        post_feed(feed)
+        time.sleep(1)
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--scope", required=True)
 parser.add_argument("-f", "--force", required=False, default=False, action='store_true')
 parser.add_argument("-d", "--debug", required=False, default=False, action='store_true')
+parser.add_argument("-l", "--loadall", required=False, default=False, action='store_true')
 args = parser.parse_args()
 
 if args.force:
@@ -89,6 +102,14 @@ if args.force:
 
 if args.debug:
     debug = True
+    
+if args.loadall:
+    print("Loading all items to db. This will take a few minutes")
+    fetch_and_store(SCOPE_UPLOADPLAN)
+    fetch_and_store(SCOPE_VIDEO)
+    fetch_and_store(SCOPE_NEWS)
+    fetch_and_store(SCOPE_PIETCAST)
+    sys.exit()
 
 if args.scope == 'uploadplan':
     check_for_update(SCOPE_UPLOADPLAN)
