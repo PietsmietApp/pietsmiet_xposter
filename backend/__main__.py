@@ -18,9 +18,9 @@ import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.firebase_util import send_fcm, put_feed, get_feed, put_reddit_url, get_reddit_url
+from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url,update_desc
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
-from backend.scrape_util import format_text, smart_truncate
+from backend.scrape_util import format_text, smart_truncate, scrape_site
 from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 
@@ -30,39 +30,55 @@ debug = False
 
 def check_for_update(scope):
     print("Checking for: " + scope)
-    new_feed = parse_feed(scope)
-    if new_feed is None:
-        print("Feed is empty, bad network?")
+    new_feeds = parse_feed(scope)
+    if new_feeds is None:
+        print("New Feeds are empty, bad network?")
         return
-    old_feed = get_feed(scope)
-    if old_feed is None:
-        print("Error: Cannot retrieve old feed! Aborting")
+    
+    old_feeds = get_last_feeds(scope)
+    if old_feeds is None:
+        print("Error: Cannot retrieve old feeds! Aborting")
         return
-    if force or (new_feed.title != old_feed.title):
-        print("New item in " + scope)
-        put_feed(new_feed)
-        send_fcm(new_feed, debug)
-    if scope == SCOPE_UPLOADPLAN:  # or (scope == SCOPE_NEWS)
-        compare_uploadplan(new_feed, old_feed)
+        
+    #Iterate through every new feed and check if it matches one of the old feeds
+    i = 0
+    for new_feed in new_feeds:
+        new = True
+        if old_feeds != False:
+            for old_feed in old_feeds:
+                if (new_feed.title == old_feed.title) and (new_feed.date == old_feed.date):
+                    #does match old feed => is not new
+                    new = False
 
-
-def compare_uploadplan(new_feed, old_feed):
-    if force or (new_feed.title != old_feed.title):
-        print("Submitting uploadplan to reddit")
-        # if new_feed.scope == SCOPE_NEWS:
-        # new_feed.desc = smart_truncate(new_feed.desc, new_feed.link)
-        # submit_to_reddit("Neuer Post auf pietsmiet.de: " + new_feed.title, format_text(new_feed))
-        # else:
-        submission_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
-        put_reddit_url(submission_url)
-    elif new_feed.desc != old_feed.desc:
-        print("Desc is different")
-        new_feed.reddit_url = old_feed.reddit_url
-        put_feed(new_feed)
-        if old_feed.reddit_url is not None:
-            edit_submission(format_text(new_feed), old_feed.reddit_url)
-        else:
-            print("No reddit url provided")
+        if new or force:
+            # Is new => Submit to firebase FCM & DB and if uploadplan to reddit 
+            print("New item in " + new_feed.scope)
+            if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
+                new_feed.desc = scrape_site(new_feed.link)
+                
+            #If it's the first new_feed and new, submit it
+            if (scope == SCOPE_UPLOADPLAN) and i == 0:
+                print("Submitting uploadplan to reddit")
+                new_feed.reddit_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
+                send_fcm(new_feed, debug)
+            else:
+                # Don't submit old uploadplan
+                send_fcm(new_feed, debug)
+            post_feed(new_feed)
+        elif scope == SCOPE_UPLOADPLAN and i == 0:
+            # Check if desc changed if scope is uploadplan and it's the first new_feed
+            new_feed.desc = scrape_site(new_feed.link)
+            if new_feed.desc != old_feed.desc:
+                print("Desc is different")
+                if old_feed.reddit_url is not None:
+                    new_feed.reddit_url = old_feed.reddit_url
+                    edit_submission(format_text(new_feed), old_feed.reddit_url)
+                else:
+                    print("No reddit url provided")    
+                # Put the updated desc back into db
+                update_desc(new_feed)
+        i = i + 1
+             
 
 
 parser = argparse.ArgumentParser()
