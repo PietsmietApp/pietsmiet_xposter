@@ -26,7 +26,7 @@ def scrape_site(url):
         to_return = ""
         for thing in results:
             to_return += str(thing)
-        replaced = re.sub(r"(< ?br ?\/?>){2}", "<br/>", to_return)
+        replaced = re.sub(r"(< ?br ?/?>){2}", "<br/>", to_return)
         final_replaced = re.sub(r"<p ?>\s?</ ?p>", " ", replaced)
         return final_replaced
     except Exception:
@@ -46,7 +46,8 @@ def format_text(feed):
     if scope == SCOPE_NEWS:
         text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
     else:
-        text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
+        text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + \
+               text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
 
     return text
 

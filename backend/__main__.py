@@ -10,17 +10,15 @@
 # 0 3 * * * python3 /home/pi/backend -s delete >/home/pi/crontab.log 2>&1
 #
 # => durschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
-import time
-import datetime
-import sys
-import os
 import argparse
+import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url,update_desc
+from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url, update_desc
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
-from backend.scrape_util import format_text, smart_truncate, scrape_site
+from backend.scrape_util import format_text, scrape_site
 from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 
@@ -34,20 +32,20 @@ def check_for_update(scope):
     if new_feeds is None:
         print("New Feeds are empty, bad network?")
         return
-    
+
     old_feeds = get_last_feeds(scope)
     if old_feeds is None:
         print("Error: Cannot retrieve old feeds! Aborting")
         return
-        
-    #Iterate through every new feed and check if it matches one of the old feeds
+
+    # Iterate through every new feed and check if it matches one of the old feeds
     i = 0
     for new_feed in new_feeds:
         new = True
         if old_feeds != False:
             for old_feed in old_feeds:
                 if (new_feed.title == old_feed.title) and (new_feed.date == old_feed.date):
-                    #does match old feed => is not new
+                    # does match old feed => is not new
                     new = False
 
         if new or force:
@@ -55,8 +53,8 @@ def check_for_update(scope):
             print("New item in " + new_feed.scope)
             if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
                 new_feed.desc = scrape_site(new_feed.link)
-                
-            #If it's the first new_feed and new, submit it
+
+            # If it's the first new_feed and new, submit it
             if (scope == SCOPE_UPLOADPLAN) and i == 0:
                 print("Submitting uploadplan to reddit")
                 new_feed.reddit_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
@@ -74,11 +72,10 @@ def check_for_update(scope):
                     new_feed.reddit_url = old_feed.reddit_url
                     edit_submission(format_text(new_feed), old_feed.reddit_url)
                 else:
-                    print("No reddit url provided")    
-                # Put the updated desc back into db
+                    print("No reddit url provided")
+                    # Put the updated desc back into db
                 update_desc(new_feed)
         i = i + 1
-             
 
 
 parser = argparse.ArgumentParser()

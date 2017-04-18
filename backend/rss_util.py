@@ -1,7 +1,9 @@
-import feedparser
-from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS, SCOPE_VIDEO
-from email.utils import parsedate
 import time
+from email.utils import parsedate
+
+import feedparser
+
+from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS
 
 
 class Feed(object):
@@ -32,12 +34,9 @@ def parse_feed(scope):
             t = parsedate(d.entries[x].published)
             # Store date as unix milliseconds timestamp so it can be easily parsed in Android
             date = int(time.mktime(t)) * 1000
-            
+
             new_feeds.append(Feed(title=title, link=link, date=date, desc=desc, scope=scope))
         except IndexError:
             print("Index does not exist")
-        
-        
-    return new_feeds
 
-    
+    return new_feeds
