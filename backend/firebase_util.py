@@ -23,7 +23,8 @@ def post_feed(feed):
             "desc": feed.desc,
             "link": feed.link,
             "title": feed.title,
-            "date": feed.date
+            "date": feed.date,
+            "scope": feed.scope
         }
         firebase_db.put(url="/new/" + scope, name=name, data=data)
     except Exception as e:

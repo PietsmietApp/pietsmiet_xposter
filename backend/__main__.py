@@ -106,8 +106,8 @@ if args.debug:
 if args.loadall:
     print("Loading all items to db. This will take a few minutes")
     fetch_and_store(SCOPE_UPLOADPLAN)
-    fetch_and_store(SCOPE_VIDEO)
     fetch_and_store(SCOPE_NEWS)
+    fetch_and_store(SCOPE_VIDEO)
     fetch_and_store(SCOPE_PIETCAST)
     sys.exit()
 
