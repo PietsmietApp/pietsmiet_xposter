@@ -43,17 +43,17 @@ def format_text(feed):
     link = feed.link
     scope = feed.scope
 
-    if scope == SCOPE_NEWS:
-        text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
-    else:
-        text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + \
-               text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
+    # if scope == SCOPE_NEWS:
+        # text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
+    # else:
+    text = '*[Link zum Post auf pietsmiet.de](' + link + ')*\n\n' + \
+           text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
 
     return text
 
 
-def smart_truncate(content, link, length=220):
-    if not len(content) <= length:
-        content = content[:length].rsplit(' ', 1)[0] + '...  '
+def smart_truncate(feed, length=220):
+    if not len(feed.desc) <= length:
+        content = feed.desc[:length].rsplit(' ', 1)[0] + '...  '
 
-    return content + "<a href=\"" + link + "\">Auf pietsmiet.de weiterlesen <span>→</span></a>"
+    return content + "<a href=\"" + feed.link + "\">Auf pietsmiet.de weiterlesen →</a>"

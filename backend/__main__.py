@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url, update_desc
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
-from backend.scrape_util import format_text, scrape_site
+from backend.scrape_util import format_text, scrape_site, smart_truncate
 from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 
@@ -54,6 +54,8 @@ def check_for_update(scope):
             print("New item in " + new_feed.scope)
             if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
                 new_feed.desc = scrape_site(new_feed.link)
+            if (scope == SCOPE_NEWS):
+                new_feed.desc = smart_truncate(new_feed)
 
             # If it's the first new_feed and new, submit it
             if (scope == SCOPE_UPLOADPLAN) and i == 0:
@@ -86,6 +88,8 @@ def fetch_and_store(scope):
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
             feed.desc = scrape_site(feed.link)
             time.sleep(3)
+        if (scope == SCOPE_NEWS):
+            feed.desc = smart_truncate(feed)
         post_feed(feed)
         time.sleep(1)
 

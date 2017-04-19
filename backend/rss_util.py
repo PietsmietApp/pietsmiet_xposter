@@ -3,7 +3,7 @@ from email.utils import parsedate
 
 import feedparser
 
-from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS
+from backend.scopes import get_url_for_scope, SCOPE_UPLOADPLAN, SCOPE_NEWS, SCOPE_VIDEO
 
 
 class Feed(object):
@@ -27,13 +27,13 @@ def parse_feed(scope, limit=True):
     if limit:
         max_posts = 3
     else:
-        max_posts = 50
+        max_posts = 25
     for x in range(0, max_posts):
         try:
             title = d.entries[x].title
             link = d.entries[x].link
             desc = d.entries[x].description
-            if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
+            if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS) or (scope == SCOPE_VIDEO):
                 desc = None
             t = parsedate(d.entries[x].published)
             # Store date as unix milliseconds timestamp so it can be easily parsed in Android
