@@ -24,23 +24,23 @@ def post_feed(feed):
             "link": feed.link,
             "title": feed.title,
             "date": feed.date,
-            "scope": feed.scope
+            "scope": feed.scope,
+            "reddit_url": feed.reddit_url
         }
         firebase_db.put(url="/new/" + scope, name=name, data=data)
     except Exception as e:
         print('Error putting feed into fb db' + format(e))
 
 
-def get_last_feeds(scope):
+def get_last_feeds(scope, limit):
     try:
-        result = firebase_db.get("/new/" + scope, None, params={'orderBy': '"pubDate"', 'limitToLast': '3'})
+        result = firebase_db.get("/new/" + scope, None, params={'orderBy': '"date"', 'limitToLast': limit})
     except Exception as e:
         print('Error getting feed from fb db' + format(e))
         return None
 
     if result is None:
         return False
-
     old_feeds = []
     for key, feed in result.items():
         title = None
@@ -54,7 +54,7 @@ def get_last_feeds(scope):
             print("Warning: Title not in db!")
         if 'desc' in feed:
             desc = feed['desc']
-        else:
+        elif scope != "video":
             print("Warning: Desc not in db!")
         if 'link' in feed:
             link = feed['link']
@@ -74,10 +74,10 @@ def get_last_feeds(scope):
     return old_feeds
 
 
-def update_desc(new_feed):
-    name = get_id_of_feed(new_feed)
+def update_desc(feed):
+    name = get_id_of_feed(feed)
     try:
-        result = firebase_db.put("/new/uploadplan/" + name, "desc", data=new_feed.desc)
+        result = firebase_db.put("/new/uploadplan/" + name, "desc", data=feed.desc)
     except Exception as e:
         print('Error updating feed desc: ' + format(e))
         result = None
@@ -87,13 +87,15 @@ def update_desc(new_feed):
 
 def get_reddit_url():
     try:
-        result = firebase_db.get("/new/uploadplan", None, params={'orderBy': '"pubDate"', 'limitToLast': '1'})
-        if 'reddit_url' in result[0]:
-            return result[0]['reddit_url']
-        else:
-            print("No reddit url in result")
+        result = firebase_db.get("/new/uploadplan", None, params={'orderBy': '"date"', 'limitToLast': '1'})
     except Exception as e:
         print('Error getting reddit url feed from fb db' + format(e))
+        
+    for key, feed in result.items():
+        if 'reddit_url' in feed:
+            return feed['reddit_url']
+        else:
+            print("No reddit url in result")
 
     return None
 
@@ -102,7 +104,7 @@ def send_fcm(feed, debug=False):
     message = feed.desc
     title = feed.title
     if feed.scope == "uploadplan":
-        print(feed.desc)
+        
         # Only send the actual uploadplan
         match = re.search("(?:<p>)?(?:<strong>)?Upload-Plan am.*?(?:</strong>)?(?:<p>|<br ?/?>)(.*?)</p>", feed.desc,
                           re.DOTALL)
@@ -129,7 +131,7 @@ def send_fcm(feed, debug=False):
 
     try:
         firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=topic)
-        print("Sent fcm for " + feed.scope + " to topic/" + topic)
+        print("Sent fcm for " + feed.scope + " to topic/" + topic + " with Content: " + message)
     except Exception as e:
         print("Error making new fcm" + format(e))
 

@@ -16,7 +16,7 @@ class Feed(object):
         self.reddit_url = reddit_url
 
 
-def parse_feed(scope, limit=True):
+def parse_feed(scope, limit):
     """
     Get's a feed from the scope url and parses it
     :param scope: For the url and the scope in the object
@@ -24,11 +24,7 @@ def parse_feed(scope, limit=True):
     """
     d = feedparser.parse(get_url_for_scope(scope))
     new_feeds = []
-    if limit:
-        max_posts = 3
-    else:
-        max_posts = 25
-    for x in range(0, max_posts):
+    for x in range(0, limit):
         try:
             title = d.entries[x].title
             link = d.entries[x].link

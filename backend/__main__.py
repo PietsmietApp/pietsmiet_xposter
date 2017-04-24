@@ -9,7 +9,7 @@
 # 0 11-24/3 * * * python3 /home/pi/backend -s pietcast >/home/pi/crontab.log 2>&1
 # 0 3 * * * python3 /home/pi/backend -s delete >/home/pi/crontab.log 2>&1
 #
-# => durschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
+# => durchschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
 import argparse
 import os
 import sys
@@ -28,28 +28,33 @@ debug = False
 
 
 def check_for_update(scope):
+    limit = 3
     print("Checking for: " + scope)
-    new_feeds = parse_feed(scope)
+    new_feeds = parse_feed(scope, limit)
     if new_feeds is None:
         print("New Feeds are empty, bad network?")
         return
 
-    old_feeds = get_last_feeds(scope)
+    old_feeds = get_last_feeds(scope, limit)
     if old_feeds is None:
         print("Error: Cannot retrieve old feeds! Aborting")
         return
+    elif old_feeds is False:
+        print("No feeds in db, loading all posts in db")
+        fetch_and_store(scope, 15)
+       
 
     # Iterate through every new feed and check if it matches one of the old feeds
+    is_completely_new = True
     i = 0
     for new_feed in new_feeds:
-        new = True
-        if old_feeds != False:
-            for old_feed in old_feeds:
-                if (new_feed.title == old_feed.title) and (new_feed.date == old_feed.date):
-                    # does match old feed => is not new
-                    new = False
-
-        if new or force:
+        different = False
+        for old_feed in old_feeds:
+            if (new_feed.title == old_feed.title) or force:
+                different = old_feed
+                is_completely_new = False
+        
+        if not different:
             # Is new => Submit to firebase FCM & DB and if uploadplan to reddit 
             print("New item in " + new_feed.scope)
             if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
@@ -57,33 +62,37 @@ def check_for_update(scope):
             if (scope == SCOPE_NEWS):
                 new_feed.desc = smart_truncate(new_feed)
 
-            # If it's the first new_feed and new, submit it
+            # If it's the first new_feed and new, submit it => Don't submit old uploadplan
             if (scope == SCOPE_UPLOADPLAN) and i == 0:
                 print("Submitting uploadplan to reddit")
-                new_feed.reddit_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
-                send_fcm(new_feed, debug)
-            else:
-                # Don't submit old uploadplan
-                send_fcm(new_feed, debug)
+                new_feed.reddit_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)                
+            send_fcm(new_feed, debug)
             post_feed(new_feed)
+            
         elif scope == SCOPE_UPLOADPLAN and i == 0:
+            old_feed = different
             # Check if desc changed if scope is uploadplan and it's the first new_feed
             new_feed.desc = scrape_site(new_feed.link)
             if new_feed.desc != old_feed.desc:
-                print("Desc is different")
                 if old_feed.reddit_url is not None:
-                    new_feed.reddit_url = old_feed.reddit_url
                     edit_submission(format_text(new_feed), old_feed.reddit_url)
                 else:
                     print("No reddit url provided")
-                    # Put the updated desc back into db
+                # Put the updated desc back into db
                 update_desc(new_feed)
-        i = i + 1
+            
+        i += 1
+        
+    if is_completely_new:
+        # All feeds changed, means there was a gap inbetween => Reload all posts into db
+        # This only happens if the script wasn't running for a few days
+        print("Posts in db too old, loading all posts in db")
+        fetch_and_store(scope, 15)
 
 
-def fetch_and_store(scope):
-    new_feeds = parse_feed(scope, limit=False)
-    print(str(len(new_feeds)) + " Items in " + scope + " gefunden.")
+def fetch_and_store(scope, limit):
+    new_feeds = parse_feed(scope, limit)
+    print("Loading" + str(len(new_feeds)) + " items in " + scope)
     for feed in new_feeds:
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
             feed.desc = scrape_site(feed.link)
@@ -95,10 +104,10 @@ def fetch_and_store(scope):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-s", "--scope", required=True)
+parser.add_argument("-s", "--scope", required=False)
 parser.add_argument("-f", "--force", required=False, default=False, action='store_true')
 parser.add_argument("-d", "--debug", required=False, default=False, action='store_true')
-parser.add_argument("-l", "--loadall", required=False, default=False, action='store_true')
+parser.add_argument("-l", "--loadall", required=False)
 args = parser.parse_args()
 
 if args.force:
@@ -109,10 +118,11 @@ if args.debug:
     
 if args.loadall:
     print("Loading all items to db. This will take a few minutes")
-    fetch_and_store(SCOPE_UPLOADPLAN)
-    fetch_and_store(SCOPE_NEWS)
-    fetch_and_store(SCOPE_VIDEO)
-    fetch_and_store(SCOPE_PIETCAST)
+    limit = int(args.loadall)
+    fetch_and_store(SCOPE_UPLOADPLAN, limit)
+    fetch_and_store(SCOPE_NEWS, limit)
+    fetch_and_store(SCOPE_VIDEO, limit)
+    fetch_and_store(SCOPE_PIETCAST, limit)
     sys.exit()
 
 if args.scope == 'uploadplan':
@@ -131,4 +141,4 @@ elif args.scope == 'delete':
     else:
         print("Couldn't delete submission, no URL in db")
 else:
-    print("No valid scope (uploadplan, news, video, delete, pietcast) supplied!")
+    print("No valid scope (--scope [uploadplan, news, video, delete, pietcast]) supplied!")
