@@ -7,7 +7,8 @@ from backend.api_keys import fcm_key, fb_db_key, fb_db_url
 from backend.rss_util import Feed
 
 firebase_fcm = FCMNotification(api_key=fcm_key)
-firebase_db = firebase.FirebaseApplication(fb_db_url, authentication=fb_db_key)
+authentication = firebase.FirebaseAuthentication(fb_db_key, None)
+firebase_db = firebase.FirebaseApplication(fb_db_url, authentication=authentication)
 
 
 def post_feed(feed):
