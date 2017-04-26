@@ -128,11 +128,11 @@ def send_fcm(feed, debug=False):
     }
     topic = feed.scope
     if debug is True:
-        topic = "test"
+        topic = "test2"
 
     try:
         firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=topic)
-        print("Sent fcm for " + feed.scope + " to topic/" + topic + " with Content: " + message)
+        print("Sent fcm for " + feed.scope + " to topic/" + topic + " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
     except Exception as e:
         print("Error making new fcm" + format(e))
 

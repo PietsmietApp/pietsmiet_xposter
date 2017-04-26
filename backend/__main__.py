@@ -50,11 +50,11 @@ def check_for_update(scope):
     for new_feed in new_feeds:
         different = False
         for old_feed in old_feeds:
-            if (new_feed.title == old_feed.title) or force:
+            if new_feed.title == old_feed.title:
                 different = old_feed
                 is_completely_new = False
         
-        if not different:
+        if not different or force:
             # Is new => Submit to firebase FCM & DB and if uploadplan to reddit 
             print("New item in " + new_feed.scope)
             if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
@@ -83,7 +83,7 @@ def check_for_update(scope):
             
         i += 1
         
-    if is_completely_new:
+    if is_completely_new and not force:
         # All feeds changed, means there was a gap inbetween => Reload all posts into db
         # This only happens if the script wasn't running for a few days
         print("Posts in db too old, loading all posts in db")
