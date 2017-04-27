@@ -26,8 +26,12 @@ def scrape_site(url):
         to_return = ""
         for thing in results:
             to_return += str(thing)
+        # replace two linebreaks with one
         replaced = re.sub(r"(< ?br ?/?>){2}", "<br/>", to_return)
-        final_replaced = re.sub(r"<p ?>\s?</ ?p>", " ", replaced)
+        # delete a linebreak if it's followed by a paragraph ending
+        replaced2 = re.sub(r"< ?br ?/?>\s?</ ?p>", "</p>", to_return)
+        # delete empty paragraphs
+        final_replaced = re.sub(r"<p ?>\s?</ ?p>", " ", replaced2)
         return final_replaced
     except Exception:
         return None
