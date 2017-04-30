@@ -17,7 +17,7 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url, update_desc
+from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url, update_desc, is_enabled
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text, scrape_site, smart_truncate
 from backend.rss_util import parse_feed
@@ -28,6 +28,10 @@ debug = False
 
 
 def check_for_update(scope):
+    if not is_enabled():
+        print("Master switch is off, aborting")
+        return
+        
     limit = 3
     print("Checking for: " + scope)
     new_feeds = parse_feed(scope, limit)
@@ -35,13 +39,14 @@ def check_for_update(scope):
         print("New Feeds are empty, bad network?")
         return
 
-    old_feeds = get_last_feeds(scope, limit)
+    # Load more old items to compare
+    old_feeds = get_last_feeds(scope, limit + 10)
     if old_feeds is None:
         print("Error: Cannot retrieve old feeds! Aborting")
         return
     elif old_feeds is False:
         print("No feeds in db, loading all posts in db")
-        fetch_and_store(scope, 15)
+        fetch_and_store(scope, 25)
        
 
     # Iterate through every new feed and check if it matches one of the old feeds
@@ -53,6 +58,8 @@ def check_for_update(scope):
             if new_feed.title == old_feed.title:
                 different = old_feed
                 is_completely_new = False
+                # We found the equivalent, break the loop
+                break
         
         if not different or force:
             # Is new => Submit to firebase FCM & DB and if uploadplan to reddit 
@@ -80,6 +87,10 @@ def check_for_update(scope):
                     print("No reddit url provided")
                 # Put the updated desc back into db
                 update_desc(new_feed)
+        else:
+            # Don't iterate through older posts from rss after one post was not new
+            # This is to prevent fcm spam on possible bugs
+            break
             
         i += 1
         
@@ -92,7 +103,7 @@ def check_for_update(scope):
 
 def fetch_and_store(scope, limit):
     new_feeds = parse_feed(scope, limit)
-    print("Loading" + str(len(new_feeds)) + " items in " + scope)
+    print("Loading " + str(len(new_feeds)) + " items in " + scope)
     for feed in new_feeds:
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
             feed.desc = scrape_site(feed.link)

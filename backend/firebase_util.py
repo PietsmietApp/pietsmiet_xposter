@@ -99,7 +99,19 @@ def get_reddit_url():
             print("No reddit url in result")
 
     return None
+    
 
+def is_enabled():
+    # Master switch to disable bot remotely
+    try:
+        result = firebase_db.get("/", "active")
+        if result is not None:
+            return result
+    except Exception as e:
+        print('Error getting active status from fb db' + format(e))
+        
+    return False
+    
 
 def send_fcm(feed, debug=False):
     message = feed.desc
@@ -119,6 +131,9 @@ def send_fcm(feed, debug=False):
         # Only send the title of the news item (as message)
         title = "News (pietsmiet.de)"
         message = feed.title
+        
+    if debug:
+        title = "DEBUG: " + title
 
     data_message = {
         "title": title,

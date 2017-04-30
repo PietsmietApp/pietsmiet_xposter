@@ -43,9 +43,11 @@ def format_text(feed):
     :param feed: Feed to format
     :return: formatted text
     """
-    text = html2text.html2text(feed.desc)
+    m_text = html2text.html2text(feed.desc)
     link = feed.link
     scope = feed.scope
+    
+    text = replaced = re.sub(r" \*\*", "** ", m_text)
 
     # if scope == SCOPE_NEWS:
         # text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
