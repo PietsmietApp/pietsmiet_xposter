@@ -142,11 +142,16 @@ def send_fcm(feed, debug=False):
         "link": feed.link
     }
     topic = feed.scope
+    low_priority = True
     if debug is True:
         topic = "test2"
+        low_priority = False
 
     try:
-        firebase_fcm.notify_topic_subscribers(data_message=data_message, topic_name=topic)
+        firebase_fcm.notify_topic_subscribers(data_message=data_message, 
+            topic_name=topic, 
+            time_to_live=86400, 
+            low_priority=low_priority)
         print("Sent fcm for " + feed.scope + " to topic/" + topic + " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
     except Exception as e:
         print("Error making new fcm" + format(e))

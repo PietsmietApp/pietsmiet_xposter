@@ -72,7 +72,11 @@ def check_for_update(scope):
             # If it's the first new_feed and new, submit it => Don't submit old uploadplan
             if (scope == SCOPE_UPLOADPLAN) and i == 0:
                 print("Submitting uploadplan to reddit")
-                new_feed.reddit_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)                
+                time.sleep(1)
+                url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
+                if not debug:
+                    new_feed.reddit_url = url
+                    
             send_fcm(new_feed, debug)
             post_feed(new_feed)
             
@@ -121,11 +125,15 @@ parser.add_argument("-d", "--debug", required=False, default=False, action='stor
 parser.add_argument("-l", "--loadall", required=False)
 args = parser.parse_args()
 
-if args.force:
-    force = True
-
 if args.debug:
     debug = True
+    
+if args.force:
+    if debug:
+        force = True
+    else:
+        print("Force can only be used in debug mode (-d flag)")
+        sys.exit()
     
 if args.loadall:
     print("Loading all items to db. This will take a few minutes")
