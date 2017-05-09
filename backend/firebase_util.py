@@ -159,4 +159,4 @@ def send_fcm(feed, debug=False):
 
 def get_id_of_feed(feed):
     title = re.sub(r'[^a-zA-Z0-9]+', '', feed.title)
-    return title + str(feed.date)
+    return str(feed.date) + title
