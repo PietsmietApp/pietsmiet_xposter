@@ -68,6 +68,10 @@ def check_for_update(scope):
                 new_feed.desc = scrape_site(new_feed.link)
             if (scope == SCOPE_NEWS):
                 new_feed.desc = smart_truncate(new_feed)
+                
+            fcm_success = send_fcm(new_feed, debug)
+            if not fcm_success:
+                print("CRTICAL ERROR: Could not send FCM, aborting!")
 
             # If it's the first new_feed and new, submit it => Don't submit old uploadplan
             if (scope == SCOPE_UPLOADPLAN) and i == 0:
@@ -76,9 +80,9 @@ def check_for_update(scope):
                 url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
                 if not debug:
                     new_feed.reddit_url = url
-                    
-            send_fcm(new_feed, debug)
+ 
             post_feed(new_feed)
+            #time.sleep(2)
             
         elif scope == SCOPE_UPLOADPLAN and i == 0:
             old_feed = different
@@ -95,6 +99,7 @@ def check_for_update(scope):
             # Don't iterate through older posts from rss after one post was not new
             # This is to prevent fcm spam on possible bugs
             break
+        
             
         i += 1
         
