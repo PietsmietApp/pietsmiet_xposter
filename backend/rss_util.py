@@ -33,12 +33,11 @@ def parse_feed(scope, limit):
                 desc = None
             t = parsedate(d.entries[x].published)
             # Store date as unix milliseconds timestamp so it can be easily parsed in Android
-            # Add two hours to fix wrong RSS timestamp
+            # Add two hours to fix wrong RSS timezone
             date = int(time.mktime(t) + 7200 ) * 1000
 
             new_feeds.append(Feed(title=title, link=link, date=date, desc=desc, scope=scope))
         except IndexError:
-            if limit:
-                print("Index does not exist")
+            pass
 
     return new_feeds

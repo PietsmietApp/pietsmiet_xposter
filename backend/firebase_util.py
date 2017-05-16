@@ -119,7 +119,7 @@ def send_fcm(feed, debug=False):
     if feed.scope == "uploadplan":
         
         # Only send the actual uploadplan
-        match = re.search("(?:<p>)?(?:<strong>)?Upload-Plan am.*?(?:</strong>)?(?:<p>|<br ?/?>)(.*?)</p>", feed.desc,
+        match = re.search("(?:<p>)?(?:<strong>)?Upload-Plan am.*?(?:</strong>)?(?:<p>|<br ?/?>)(.*?)(?:<br ?/?>)*<\/p>", feed.desc,
                           re.DOTALL)
         if match is not None:
             message = match.group(1)
