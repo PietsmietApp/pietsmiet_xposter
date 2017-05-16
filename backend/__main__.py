@@ -82,7 +82,7 @@ def check_for_update(scope):
                     new_feed.reddit_url = url
  
             post_feed(new_feed)
-            #time.sleep(2)
+            time.sleep(2)
             
         elif scope == SCOPE_UPLOADPLAN and i == 0:
             old_feed = different
