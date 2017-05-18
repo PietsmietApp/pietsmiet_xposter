@@ -171,8 +171,7 @@ def send_fcm(feed, debug=False):
                 time_to_live=86400, 
                 low_priority=low_priority)
             print("Sent fcm for " + feed.scope + " to topic/" + topic + 
-                " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore') + 
-                " and game: " + game)
+                " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
             return True
         except pyfcm.errors.FCMServerError as e:
             retry_time = pow(4, retry_count)
