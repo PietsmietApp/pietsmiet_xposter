@@ -32,7 +32,7 @@ def check_for_update(scope):
         print("Master switch is off, aborting")
         return
         
-    limit = 3
+    limit = 4
     print("Checking for: " + scope)
     new_feeds = parse_feed(scope, limit)
     if new_feeds is None:
@@ -96,7 +96,7 @@ def check_for_update(scope):
                 # Put the updated desc back into db
                 update_desc(new_feed)
         else:
-            # Don't iterate through older posts from rss after one post was not new
+            # Don't iterate through older posts from rss after a single post inbetween was not new
             # This is to prevent fcm spam on possible bugs
             break
         
