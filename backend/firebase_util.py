@@ -166,12 +166,16 @@ def send_fcm(feed, debug=False):
     
     while retry_count <= 3:
         try:
+            print("Sending fcm for " + feed.scope + " to topic/" + topic + 
+                    " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore') + None)
+        except Exception:
+            print("You're dumb af and tried to print a bad text")
+            
+        try:
             firebase_fcm.notify_topic_subscribers(data_message=data_message, 
                 topic_name=topic, 
                 time_to_live=86400, 
                 low_priority=low_priority)
-            print("Sent fcm for " + feed.scope + " to topic/" + topic + 
-                " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
             return True
         except pyfcm.errors.FCMServerError as e:
             retry_time = pow(4, retry_count)
