@@ -167,7 +167,7 @@ def send_fcm(feed, debug=False):
     while retry_count <= 3:
         try:
             print("Sending fcm for " + feed.scope + " to topic/" + topic + 
-                    " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore') + None)
+                    " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
         except Exception:
             print("You're dumb af and tried to print a bad text")
             
