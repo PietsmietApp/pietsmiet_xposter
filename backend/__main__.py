@@ -17,7 +17,8 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.firebase_util import send_fcm, post_feed, get_last_feeds, get_reddit_url, update_desc, is_enabled
+from backend.firebase_db_util import post_feed, get_last_feeds, get_reddit_url, update_desc, is_enabled
+from backend.fcm_util import send_fcm
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text, scrape_site, smart_truncate
 from backend.rss_util import parse_feed

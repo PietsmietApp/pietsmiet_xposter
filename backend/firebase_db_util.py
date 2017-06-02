@@ -1,15 +1,11 @@
 import re
-import time
 import math
 
 from firebase import firebase
-from pyfcm import FCMNotification
-import pyfcm
 
-from backend.api_keys import fcm_key, fb_db_key, fb_db_url
+from backend.api_keys import fb_db_key, fb_db_url
 from backend.rss_util import Feed
 
-firebase_fcm = FCMNotification(api_key=fcm_key)
 authentication = firebase.FirebaseAuthentication(fb_db_key, None)
 firebase_db = firebase.FirebaseApplication(fb_db_url, authentication=authentication)
 
@@ -115,80 +111,6 @@ def is_enabled():
         
     return False
     
-
-def send_fcm(feed, debug=False):
-    global firebase_fcm
-    message = feed.desc
-    title = feed.title
-    game = None
-    if feed.scope == "uploadplan":
-        
-        # Only send the actual uploadplan
-        match = re.search("\n(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{100,}?)(?:<br ?/?>)*<\/p>", 
-                        feed.desc,
-                        re.DOTALL)
-        if match is not None:
-            message = match.group(1)
-        else:
-            message = "In der App ansehen..."
-    elif feed.scope == "video":
-        # Only send the title of the video (as message)
-        title = "Neues Video (pietsmiet.de)"
-        message = feed.title
-        if (u'\U0001f3ae' in message) or ('|' in message):
-            # Check which game this is
-            match = re.search("(?:\U0001F3AE|\|) ?(.*)", message)
-            if match is not None:
-                complete_game = match.group(1)
-                game = re.sub(r" ?# ?\d+ ?", "", complete_game).encode('unicode_escape').decode('latin-1', 'ignore')
-        else:
-            game = "vlog"
-        
-    elif feed.scope == "news":
-        # Only send the title of the news item (as message)
-        title = "News (pietsmiet.de)"
-        message = feed.title
-        
-    if debug:
-        title = "DEBUG: " + title
-
-    data_message = {
-        "title": title,
-        "topic": feed.scope,
-        "message": message,
-        "link": feed.link,
-        "game": game
-    }
-    topic = feed.scope
-    low_priority = True
-    if debug is True:
-        topic = "test"
-        low_priority = False
-
-    retry_count = 1
-    
-    while retry_count <= 3:
-        try:
-            print("Sending fcm for " + feed.scope + " to topic/" + topic + 
-                    " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
-        except Exception:
-            print("You're dumb af and tried to print a bad text")
-            
-        try:
-            firebase_fcm.notify_topic_subscribers(data_message=data_message, 
-                topic_name=topic, 
-                time_to_live=86400, 
-                low_priority=low_priority)
-            return True
-        except pyfcm.errors.FCMServerError as e:
-            retry_time = pow(4, retry_count)
-            print("Firebase servers are asleep, new try in " + str(retry_time) + " seconds." + 
-                "\n Exception is: " + format(e))
-            time.sleep(retry_time)
-            firebase_fcm = FCMNotification(api_key=fcm_key)
-            retry_count += 1
-            
-    return False
 
 
 def get_id_of_feed(feed):
