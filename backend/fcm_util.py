@@ -84,8 +84,12 @@ def get_game_from_video(message):
         match = re.search("(?:\U0001F3AE|\|) ?(.*)", message)
         if match is not None:
             complete_game = match.group(1)
-            return re.sub(r" ?# ?\d+ ?", "", complete_game).encode('unicode_escape').decode('latin-1', 'ignore')
-        else:
-            return "none"
+            # Strip hashtag from game and remove unicode chars
+            game = re.sub(r" ?# ?\d+ ?", "", complete_game).encode('unicode_escape').decode('latin-1', 'ignore')
+            # Verify that the game name length is longer than 2 chars
+            if (len(str(game)) > 2):
+                return game            
     else:
-        return "Vlog"  
+        return "Vlog" 
+
+    return None

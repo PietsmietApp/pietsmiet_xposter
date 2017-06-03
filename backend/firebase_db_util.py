@@ -70,7 +70,7 @@ def get_last_feeds(scope, limit):
                               link=link,
                               date=date,
                               reddit_url=reddit_url))
-
+    old_feeds.sort(key=lambda x: x.date, reverse=True)
     return old_feeds
 
 
@@ -111,7 +111,13 @@ def is_enabled():
         
     return False
     
-
+def delete_feed(feed):
+    try:
+        firebase_db.delete('/new/' + feed.scope, get_id_of_feed(feed))
+        print('Feed deleted')
+    except Exception as e:
+        print('Error deleting feed from fb db' + format(e))
+    
 
 def get_id_of_feed(feed):
     title = re.sub(r'[^a-zA-Z0-9]+', '', feed.title)
