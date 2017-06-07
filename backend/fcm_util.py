@@ -48,7 +48,7 @@ def send_fcm(feed, debug=False):
             print("Sending fcm for " + feed.scope + " to topic/" + topic + 
                     " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
         except Exception:
-            print("You're dumb af and tried to print a bad text")
+            print("Warning: You're dumb af and tried to print a bad text")
             
         try:
             firebase_fcm.notify_topic_subscribers(data_message=data_message, 
@@ -58,7 +58,7 @@ def send_fcm(feed, debug=False):
             return True
         except pyfcm.errors.FCMServerError as e:
             retry_time = pow(4, retry_count)
-            print("Firebase servers are asleep, new try in " + str(retry_time) + " seconds." + 
+            print("Warning: Firebase servers are asleep, new try in " + str(retry_time) + " seconds." + 
                 "\n Exception is: " + format(e))
             time.sleep(retry_time)
             firebase_fcm = FCMNotification(api_key=fcm_key)
@@ -75,6 +75,7 @@ def get_uploadplan_from_desc(desc):
     if match is not None:
         return match.group(1)
     else:
+        print("Error: No Uploadplan found in desc! Uploadplan was:\n " + desc.encode('unicode_escape').decode('latin-1', 'ignore'))
         return "In der App ansehen..."    
     
     

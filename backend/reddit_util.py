@@ -22,7 +22,7 @@ def submit_to_reddit(title, text, debug=False):
         subreddit = "pietsmiet"
 
     if (text == '') or (title == ''):
-        print("Not submitting to reddit, null text or title")
+        print("Warning: Not submitting to reddit, null text or title")
         return
 
     # Submit the post

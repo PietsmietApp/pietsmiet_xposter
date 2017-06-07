@@ -32,13 +32,13 @@ limit = 5
 def check_for_update(scope):
     # Check if master switch in db is off and abort if true
     if not is_enabled():
-        print("Master switch is off, aborting")
+        print("Info: Master switch is off, aborting")
         return
         
     print("Checking for: " + scope)
     new_feeds = parse_feed(scope, limit)
     if new_feeds is None:
-        print("Pietsmiet.de feeds are empty, bad network? Aborting")
+        print("Error: Pietsmiet.de feeds are empty, bad network? Aborting")
         return
 
     # Load more old items than new ones to compare better (e.g. if there are deleted items in the db)
@@ -47,7 +47,7 @@ def check_for_update(scope):
         print("Error: Cannot retrieve old feeds! Aborting")
         return
     elif old_feeds is False:
-        print("No feeds in db, loading all posts in db")
+        print("Warning: No feeds in db, loading all posts in db")
         fetch_and_store(scope, 25)
        
 
@@ -87,7 +87,7 @@ def check_for_update(scope):
     if is_completely_new and not force:
         # All feeds changed, means there was probably a gap inbetween => Reload all posts into db
         # This only happens if the script wasn't running for a few days
-        print("Posts in db too old, loading all posts in db")
+        print("Info: Posts in db too old, loading all posts in db")
         fetch_and_store(scope, 15)
 
 
@@ -98,7 +98,7 @@ def check_uploadplan_edited(old_feed, new_feed):
         if old_feed.reddit_url is not None:
             edit_submission(format_text(new_feed), old_feed.reddit_url)
         else:
-            print("No reddit url provided")
+            print("Warning: No reddit url provided")
         # Put the updated desc back into db
         update_desc(new_feed)
         
@@ -118,7 +118,7 @@ def check_deleted_posts(old_feeds, new_feeds):
         if is_deleted:
             # There was no equivalent on pietsmiet.de, means it was probably deleted
             # => Remove it from the database
-            print("Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') + 
+            print("Info: Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') + 
                     "' was in db but not on pietsmiet.de. Deleting from database!")
             if not debug:
                 delete_feed(old_feed)
