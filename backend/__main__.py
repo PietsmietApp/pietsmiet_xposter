@@ -120,7 +120,7 @@ def check_deleted_posts(old_feeds, new_feeds):
             # => Remove it from the database
             print("Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') + 
                     "' was in db but not on pietsmiet.de. Deleting from database!")
-            if debug:
+            if not debug:
                 delete_feed(old_feed)
         # Only compare db posts against the same size of pietsmiet.de posts
         # because there are more db posts loaded than pietsmiet.de posts
