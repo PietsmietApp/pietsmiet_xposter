@@ -57,7 +57,7 @@ def check_for_update(scope):
     for new_feed in new_feeds:
         different = False
         for old_feed in old_feeds:
-            if new_feed.title == old_feed.title:
+            if (new_feed.title == old_feed.title) or (new_feed.link == old_feed.link):
                 different = old_feed
                 is_completely_new = False
                 # We found the equivalent, break the loop
@@ -110,7 +110,7 @@ def check_deleted_posts(old_feeds, new_feeds):
         i += 1
         is_deleted = True
         for new_feed in new_feeds:
-            if old_feed.title == new_feed.title:
+            if (old_feed.title == new_feed.title) and (old_feed.date == new_feed.date) and (old_feed.link == new_feed.link):
                 is_deleted = False
                 # We found the equivalent, break the loop
                 break
