@@ -25,7 +25,8 @@ def post_feed(feed):
             "title": feed.title,
             "date": feed.date,
             "scope": feed.scope,
-            "reddit_url": feed.reddit_url
+            "reddit_url": feed.reddit_url,
+            "image_url": feed.image_url
         }
         firebase_db.put(url="/new/" + scope, name=name, data=data)
     except Exception as e:
@@ -121,4 +122,4 @@ def delete_feed(feed):
 
 def get_id_of_feed(feed):
     title = re.sub(r'[^a-zA-Z0-9]+', '', feed.title)
-    return str(feed.date) + title
+    return str(feed.date) + title[:100]

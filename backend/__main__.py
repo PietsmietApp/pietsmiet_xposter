@@ -17,12 +17,13 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.firebase_db_util import post_feed, get_last_feeds, get_reddit_url, update_desc, is_enabled, delete_feed
+from backend.firebase_db_util import post_feed, get_last_feeds, get_reddit_url, update_desc, is_enabled, delete_feed, get_id_of_feed
 from backend.fcm_util import send_fcm
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text, scrape_site, smart_truncate
 from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
+from backend.cloud_storage import store_image_in_gcloud
 
 force = False
 debug = False
@@ -137,6 +138,10 @@ def process_new_item(new_feed, scope, i):
     if (scope == SCOPE_NEWS):
         # Truncrate the news description
         new_feed.desc = smart_truncate(new_feed)
+    if (scope == SCOPE_VIDEO) and (new_feed.image_url is not None):
+        new_feed.image_url = store_image_in_gcloud(
+            new_feed.image_url, 
+            "thumbs/" + scope + "/" + get_id_of_feed(new_feed) + ".jpg")
         
     fcm_success = send_fcm(new_feed, debug)
     if not fcm_success:
@@ -162,6 +167,10 @@ def fetch_and_store(scope, limit):
             time.sleep(1)
         if (scope == SCOPE_NEWS):
             feed.desc = smart_truncate(feed)
+        if (scope == SCOPE_VIDEO) and (feed.image_url is not None):
+            feed.image_url = store_image_in_gcloud(
+                feed.image_url, 
+                "thumbs/" + scope + "/" + get_id_of_feed(feed) + ".jpg")
         post_feed(feed)
         time.sleep(1)
 
