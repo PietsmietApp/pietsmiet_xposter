@@ -38,7 +38,7 @@ def send_fcm(feed, debug=False):
     topic = feed.scope
     low_priority = True
     if debug is True:
-        topic = "test"
+        topic = "test_neu"
         low_priority = False
 
     retry_count = 1

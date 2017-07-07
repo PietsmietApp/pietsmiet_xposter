@@ -7,3 +7,4 @@ html2text
 feedparser
 beautifulsoup4
 gcloud
+pillow
