@@ -24,6 +24,7 @@ from backend.scrape_util import format_text, scrape_site, smart_truncate
 from backend.rss_util import parse_feed
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 from backend.cloud_storage import store_image_in_gcloud
+from backend.log_util import log
 
 force = False
 debug = False
@@ -33,22 +34,22 @@ limit = 5
 def check_for_update(scope):
     # Check if master switch in db is off and abort if true
     if not is_enabled():
-        print("Info: Master switch is off, aborting")
+        log("Master switch is off, aborting")
         return
         
-    print("Checking for: " + scope)
+    log("Checking for: " + scope)
     new_feeds = parse_feed(scope, limit)
     if new_feeds is None:
-        print("Error: Pietsmiet.de feeds are empty, bad network? Aborting")
+        log("Error", "Pietsmiet.de feeds are empty, bad network? Aborting")
         return
 
     # Load more old items than new ones to compare better (e.g. if there are deleted items in the db)
     old_feeds = get_last_feeds(scope, limit + 5)
     if old_feeds is None:
-        print("Error: Cannot retrieve old feeds! Aborting")
+        log("Error", "Cannot retrieve old feeds! Aborting")
         return
     elif old_feeds is False:
-        print("Warning: No feeds in db, loading all posts in db")
+        log("Warning", "No feeds in db, loading all posts in db")
         fetch_and_store(scope, 25)
        
 
@@ -88,7 +89,7 @@ def check_for_update(scope):
     if is_completely_new and not force:
         # All feeds changed, means there was probably a gap inbetween => Reload all posts into db
         # This only happens if the script wasn't running for a few days
-        print("Info: Posts in db too old, loading all posts in db")
+        log("Posts in db too old, loading all posts in db")
         fetch_and_store(scope, 15)
 
 
@@ -99,7 +100,7 @@ def check_uploadplan_edited(old_feed, new_feed):
         if old_feed.reddit_url is not None:
             edit_submission(format_text(new_feed), old_feed.reddit_url)
         else:
-            print("Warning: No reddit url provided")
+            log("Warning", "No reddit url provided")
         # Put the updated desc back into db
         update_desc(new_feed)
         
@@ -119,7 +120,7 @@ def check_deleted_posts(old_feeds, new_feeds):
         if is_deleted:
             # There was no equivalent on pietsmiet.de, means it was probably deleted
             # => Remove it from the database
-            print("Info: Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') + 
+            log("Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') + 
                     "' was in db but not on pietsmiet.de. Deleting from database!")
             if not debug:
                 delete_feed(old_feed)
@@ -131,7 +132,7 @@ def check_deleted_posts(old_feeds, new_feeds):
 
 def process_new_item(new_feed, scope, i):
     # Submit to firebase FCM & DB and if uploadplan to reddit 
-    print("New item in " + new_feed.scope)
+    log("New item in " + new_feed.scope)
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         # Scrape site for the feed description
         new_feed.desc = scrape_site(new_feed.link)
@@ -145,11 +146,11 @@ def process_new_item(new_feed, scope, i):
         
     fcm_success = send_fcm(new_feed, debug)
     if not fcm_success:
-        print("CRTICAL ERROR: Could not send FCM, aborting!")
+        log("CRTICAL ERROR", "Could not send FCM, aborting!")
 
     if (scope == SCOPE_UPLOADPLAN) and i == 0:
         # Don't submit old uploadplan: If it's the first new_feed and new, submit it
-        print("Submitting uploadplan to reddit")
+        log("Submitting uploadplan to reddit")
         time.sleep(1)
         url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
         if not debug:
@@ -160,7 +161,7 @@ def process_new_item(new_feed, scope, i):
     
 def fetch_and_store(scope, limit):
     new_feeds = parse_feed(scope, limit)
-    print("Loading " + str(len(new_feeds)) + " items in " + scope)
+    log("Loading " + str(len(new_feeds)) + " items in " + scope)
     for feed in new_feeds:
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
             feed.desc = scrape_site(feed.link)
@@ -189,11 +190,11 @@ if args.force:
     if debug:
         force = True
     else:
-        print("Force can only be used in debug mode (-d flag)")
+        log("Force can only be used in debug mode (-d flag)")
         sys.exit()
     
 if args.loadall:
-    print("Loading all items to db. This will take a few minutes")
+    log("Loading all items to db. This will take a few minutes")
     limit = int(args.loadall)
     fetch_and_store(SCOPE_UPLOADPLAN, limit)
     fetch_and_store(SCOPE_NEWS, limit)
@@ -212,9 +213,9 @@ elif args.scope == 'news':
 elif args.scope == 'delete':
     url = get_reddit_url()
     if url is not None:
-        print("Deleting submission...")
+        log("Deleting submission...")
         delete_submission(url)
     else:
-        print("Couldn't delete submission, no URL in db")
+        log("Couldn't delete submission, no URL in db")
 else:
-    print("No valid scope (--scope [uploadplan, news, video, delete, pietcast]) supplied!")
+    log("No valid scope (--scope [uploadplan, news, video, delete, pietcast]) supplied!")
