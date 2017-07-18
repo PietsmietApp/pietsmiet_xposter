@@ -7,7 +7,8 @@ import os
 from backend.api_keys import cloud_client_id, cloud_client_email, cloud_private_key_id, cloud_private_key, \
     cloud_bucket_name
 from backend.log_util import log
-
+from backend.firebase_db_util import get_id_of_feed
+    
 max_image_size = 4000000
 size = 512, 512
 image_path = "image.jpg"
@@ -23,7 +24,7 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict)
 client = storage.Client(credentials=credentials, project=cloud_bucket_name)
 
 
-def store_image_in_gcloud(url, storage_path):
+def store_image_in_gcloud(url, feed):
     try:
         # Get image with timeout
         r = requests.get(url, stream=True, timeout=10)
@@ -42,7 +43,7 @@ def store_image_in_gcloud(url, storage_path):
 
         # Upload the image to the firebase storage
         bucket = client.get_bucket(cloud_bucket_name)
-        blob = bucket.blob(storage_path)
+        blob = bucket.blob(get_storage_path(feed))
         blob.upload_from_filename(image_path, content_type="image/jpg")
 
         # Cleanup ressources
@@ -52,8 +53,24 @@ def store_image_in_gcloud(url, storage_path):
         os.remove(image_path)
 
         # Return the download url of the image
-        return "https://storage.googleapis.com/" + cloud_bucket_name + "/" + storage_path
+        return "https://storage.googleapis.com/" + cloud_bucket_name + "/" + get_storage_path(feed)
     except Exception as e:
         log("Warning", "Couldn't up- / download image" + format(e))
 
     return None
+    
+
+def remove_image_from_gcloud(feed):
+    try:
+        # Delete the image from the firebase storage
+        bucket = client.get_bucket(cloud_bucket_name)
+        blob = bucket.blob(get_storage_path(feed))
+        blob.delete()
+        log("Debug", "Image deleted")
+    except Exception as e:
+        log("Warning", "Deleting image failed: " + format(e))
+
+
+def get_storage_path(feed):
+    return "thumbs/" + feed.scope + "/" + get_id_of_feed(feed) + ".jpg"
+    
