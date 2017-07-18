@@ -5,8 +5,10 @@ from pyfcm import FCMNotification
 import pyfcm
 
 from backend.api_keys import fcm_key
+from backend.log_util import log
 
 firebase_fcm = FCMNotification(api_key=fcm_key)
+
 
 def send_fcm(feed, debug=False):
     global firebase_fcm
@@ -24,7 +26,7 @@ def send_fcm(feed, debug=False):
         # Only send the title of the news item (as message)
         title = "News (pietsmiet.de)"
         message = feed.title
-        
+
     if debug:
         title = "DEBUG: " + title
 
@@ -42,43 +44,45 @@ def send_fcm(feed, debug=False):
         low_priority = False
 
     retry_count = 1
-    
+
     while retry_count <= 3:
         try:
-            print("Sending fcm for " + feed.scope + " to topic/" + topic + 
-                    " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
+            log("Debug", "Sending fcm for " + feed.scope + " to topic/" + topic +
+                " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
         except Exception:
-            print("Warning: You're dumb af and tried to print a bad text")
-            
+            log("Warning", "You're dumb af and tried to print a bad text")
+
         try:
-            firebase_fcm.notify_topic_subscribers(data_message=data_message, 
-                topic_name=topic, 
-                time_to_live=86400, 
-                low_priority=low_priority)
+            firebase_fcm.notify_topic_subscribers(data_message=data_message,
+                                                  topic_name=topic,
+                                                  time_to_live=86400,
+                                                  low_priority=low_priority)
             return True
         except pyfcm.errors.FCMServerError as e:
             retry_time = pow(4, retry_count)
-            print("Warning: Firebase servers are asleep, new try in " + str(retry_time) + " seconds." + 
+            log("Warning", "Firebase servers are asleep, new try in " + str(retry_time) + " seconds." +
                 "\n Exception is: " + format(e))
             time.sleep(retry_time)
             firebase_fcm = FCMNotification(api_key=fcm_key)
             retry_count += 1
-            
+
     return False
-    
-    
+
+
 def get_uploadplan_from_desc(desc):
     # Only send the actual uploadplan
-    match = re.search("\n(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{100,}?)(?:<br ?/?>)*<\/p>", 
-                    desc,
-                    re.DOTALL)
+    match = re.search(
+        "\n(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{100,}?)(?:<br ?/?>)*</p>",
+        desc,
+        re.DOTALL)
     if match is not None:
         return match.group(1)
     else:
-        print("Error: No Uploadplan found in desc! Uploadplan was:\n " + desc.encode('unicode_escape').decode('latin-1', 'ignore'))
-        return "In der App ansehen..."    
-    
-    
+        log("Error", "No Uploadplan found in desc! Uploadplan was:\n " + desc.encode('unicode_escape').decode('latin-1',
+                                                                                                              'ignore'))
+        return "In der App ansehen..."
+
+
 def get_game_from_video(message):
     if (u'\U0001f3ae' in message) or ('|' in message):
         # Check which game this is
@@ -88,9 +92,9 @@ def get_game_from_video(message):
             # Strip hashtag from game and remove unicode chars
             game = re.sub(r" ?# ?\d+ ?", "", complete_game).encode('unicode_escape').decode('latin-1', 'ignore')
             # Verify that the game name length is longer than 2 chars
-            if (len(str(game)) > 2):
-                return game            
+            if len(str(game)) > 2:
+                return game
     else:
-        return "Vlog" 
+        return "Vlog"
 
     return None

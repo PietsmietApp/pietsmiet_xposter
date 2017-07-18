@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 import html2text
-from backend.scopes import SCOPE_NEWS
+from backend.log_util import log
 import re
 
 
@@ -29,7 +29,7 @@ def scrape_site(url):
         # replace two linebreaks with one
         replaced = re.sub(r"(< ?br ?/?>){2}", "<br/>", to_return)
         # delete a linebreak if it's followed by a paragraph ending
-        replaced2 = re.sub(r"< ?br ?/?>\s?</ ?p>", "</p>", to_return)
+        replaced2 = re.sub(r"< ?br ?/?>\s?</ ?p>", "</p>", replaced)
         # delete empty paragraphs
         final_replaced = re.sub(r"<p ?>\s?</ ?p>", " ", replaced2)
         return final_replaced
@@ -45,22 +45,21 @@ def format_text(feed):
     """
     m_text = html2text.html2text(feed.desc)
     link = feed.link
-    scope = feed.scope
-    
-    text = replaced = re.sub(r" \*\*", "** ", m_text)
 
-    # if scope == SCOPE_NEWS:
-        # text += '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m'
-    # else:
+    text = re.sub(r" \*\*", "** ", m_text)
+
     text = '[Link zum PietSmiet.de-Artikel](' + link + ')\n\n' + \
-            text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m  ' + \
-            '\n\n *Auch als Push-Benachrichtigung in der [Community App für Pietsmiet](https://play.google.com/store/apps/details?id=de.pscom.pietsmiet&referrer=utm_source%3Dreddit%26utm_medium%3Duploadplan)*'
+           text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m  ' + \
+           '\n\n *Auch als Push-Benachrichtigung in der [Community App für Pietsmiet](' \
+           'https://play.google.com/store/apps/details?id=de.pscom.pietsmiet&referrer=utm_source%3Dreddit' \
+           '%26utm_medium%3Duploadplan)* '
 
     return text
 
 
 def smart_truncate(feed, length=220):
-    if not len(feed.desc) <= length:
+    content = feed.desc
+    if not len(content) <= length:
         content = feed.desc[:length].rsplit(' ', 1)[0] + '...  '
 
     return content + "<a href=\"" + feed.link + "\">Auf pietsmiet.de weiterlesen →</a>"
