@@ -141,7 +141,7 @@ def process_new_item(new_feed, scope, i):
         # Truncrate the news description
         new_feed.desc = smart_truncate(new_feed)
     if (scope == SCOPE_VIDEO) and (new_feed.image_url is not None):
-        new_feed.image_url = store_image_in_gcloud(new_feed.image_url, feed)
+        new_feed.image_url = store_image_in_gcloud(new_feed.image_url, new_feed)
 
     fcm_success = send_fcm(new_feed, debug)
     if not fcm_success:
