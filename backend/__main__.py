@@ -33,8 +33,8 @@ limit = 5
 
 def check_for_update(scope):
     # Check if master switch in db is off and abort if true
-    if not is_enabled():
-        log("Error", "Master switch is off, aborting")
+    if not is_enabled() and not debug:
+        log("Warning", "Master switch is off, aborting")
         return
 
     log("Checking for: " + scope)
@@ -73,6 +73,7 @@ def check_for_update(scope):
 
             if i == 0:
                 # No new posts found this time
+                log("Info", "No new posts found for scope " + scope)
                 # Means we can check if there are invalid posts in db and if the uploadplan was edited
 
                 check_deleted_posts(old_feeds, new_feeds)
@@ -177,7 +178,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--scope", required=False)
 parser.add_argument("-f", "--force", required=False, default=False, action='store_true')
 parser.add_argument("-d", "--debug", required=False, default=False, action='store_true')
-parser.add_argument("-l", "--loadall", required=False)
+parser.add_argument("-a", "--loadall", required=False)
+parser.add_argument("-l", "--limit", required=False)
 args = parser.parse_args()
 
 if args.debug:
@@ -189,6 +191,10 @@ if args.force:
     else:
         log("Error", "Force can only be used in debug mode (-d flag)")
         sys.exit()
+
+if args.limit:
+    limit = int(args.limit)
+    log("Info", "Limit set to " + str(limit))
 
 if args.loadall:
     log("Loading all items to db. This will take a few minutes")
