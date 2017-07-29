@@ -14,12 +14,14 @@ def send_fcm(feed, debug=False):
     global firebase_fcm
     message = feed.desc
     title = feed.title
+    # game = None
     if feed.scope == "uploadplan":
         message = get_uploadplan_from_desc(feed.desc)
     elif feed.scope == "video":
         # Only send the title of the video (as message)
         title = "Neues Video (pietsmiet.de)"
         message = feed.title
+        # game = get_game_from_video(message)
     elif feed.scope == "news":
         # Only send the title of the news item (as message)
         title = "News (pietsmiet.de)"
@@ -33,9 +35,10 @@ def send_fcm(feed, debug=False):
         "topic": feed.scope,
         "message": message,
         "link": feed.link,
+        # "game": game
     }
     topic = feed.scope
-    low_priority = False
+    low_priority = True
     if debug is True:
         topic = "test_neu"
         low_priority = False
@@ -43,20 +46,13 @@ def send_fcm(feed, debug=False):
     retry_count = 1
 
     while retry_count <= 3:
+        log("Info", "Sending fcm for " + feed.scope + " to topic/" + topic +
+            " with content: " + message)
         try:
-            log("Info", "Sending fcm for " + feed.scope + " to topic/" + topic +
-                " with content: " + message.encode('unicode_escape').decode('latin-1', 'ignore'))
-        except Exception:
-            log("Warning", "You're dumb af and tried to print a bad text")
-
-        try:
-            result = firebase_fcm.notify_topic_subscribers(data_message=data_message,
+            firebase_fcm.notify_topic_subscribers(data_message=data_message,
                                                   topic_name=topic,
                                                   time_to_live=86400,
                                                   low_priority=low_priority)
-            log("Debug", "FCM multicast_id: " + str(result["multicast_id"]))
-            #for k, v in result.items():
-            #    print(k, v)
             return True
         except pyfcm.errors.FCMServerError as e:
             retry_time = pow(4, retry_count)
@@ -65,7 +61,6 @@ def send_fcm(feed, debug=False):
             time.sleep(retry_time)
             firebase_fcm = FCMNotification(api_key=fcm_key)
             retry_count += 1
-
     return False
 
 
@@ -78,8 +73,7 @@ def get_uploadplan_from_desc(desc):
     if match is not None:
         return match.group(1)
     else:
-        log("Error", "No Uploadplan found in desc! Uploadplan was:\n " + desc.encode('unicode_escape').decode('latin-1',
-                                                                                                              'ignore'))
+        log("Error", "No Uploadplan found in desc! Uploadplan was:\n " + desc)
         return "In der App ansehen..."
 
 

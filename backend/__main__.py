@@ -1,15 +1,5 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
-
-# Current cron entries:
-# */15 9-12 * * * python3 /home/pi/backend -s uploadplan >/home/pi/crontab.log 2>&1
-# 0 12-17 * * * python3 /home/pi/backend -s uploadplan >/home/pi/crontab.log 2>&1
-# 2,32 11-22 * * * python3 /home/pi/backend -s video >/home/pi/crontab.log 2>&1
-# 0 11-24/3 * * * python3 /home/pi/backend -s news >/home/pi/crontab.log 2>&1
-# 0 11-24/3 * * * python3 /home/pi/backend -s pietcast >/home/pi/crontab.log 2>&1
-# 0 3 * * * python3 /home/pi/backend -s delete >/home/pi/crontab.log 2>&1
-#
-# => durchschnittlich ~2 Aufrufe pro Stunde, unabhängig von der Anzahl Nutzer
 import argparse
 import os
 import sys
@@ -21,99 +11,103 @@ from backend.firebase_db_util import post_feed, get_last_feeds, get_reddit_url, 
 from backend.fcm_util import send_fcm
 from backend.reddit_util import submit_to_reddit, edit_submission, delete_submission
 from backend.scrape_util import format_text, scrape_site, smart_truncate
-from backend.rss_util import parse_feed
+from backend.rss_util import parse_feed, find_feed_in_array
 from backend.scopes import SCOPE_NEWS, SCOPE_UPLOADPLAN, SCOPE_PIETCAST, SCOPE_VIDEO
 from backend.cloud_storage import store_image_in_gcloud, remove_image_from_gcloud
 from backend.log_util import log
 
 force = False
 debug = False
-limit = 5
+limit = 6
 
 
 def check_for_update(scope):
     # Check if master switch in db is off and abort if true
-    if not is_enabled() and not debug:
-        log("Warning", "Master switch is off, aborting")
-        return
+    if not is_enabled():
+        if debug:
+            log("Info", "Master switch is off, ignoring (debug)")
+        else:
+            log("Warning", "Master switch is off, aborting")
+            return
 
-    log("Checking for: " + scope)
-    new_feeds = parse_feed(scope, limit)
-    if new_feeds is None:
+    log("Checking for " + scope)
+    website_feeds = parse_feed(scope, limit)
+    if website_feeds is None:
         log("Error", "Pietsmiet.de feeds are empty, bad network? Aborting")
         return
 
-    # Load more old items than new ones to compare better (e.g. if there are deleted items in the db)
-    old_feeds = get_last_feeds(scope, limit + 5)
-    if old_feeds is None:
+    # Load more db items than new ones to compare better (e.g. if there are deleted items in the db)
+    db_feed_limit = limit + 5
+    db_feeds = get_last_feeds(scope, db_feed_limit)
+    # Check that loading of db posts was successful
+    if db_feeds is None:
         log("Error", "Cannot retrieve old feeds! Aborting")
         return
-    elif old_feeds is False:
+    # Check that there are posts in db, otherwise reload posts
+    if db_feeds is False:
         log("Warning", "No feeds in db, loading all posts in db")
         fetch_and_store(scope, 25)
+        return
+    # Check that all posts were loaded, otherwise reload posts
+    if len(db_feeds) is not db_feed_limit:
+        log("Error", "Loaded " + str(len(db_feeds)) + " feeds from db, should be " + str(db_feed_limit))
+        fetch_and_store(scope, 25)
+        return
 
-    # Iterate through every new feed and check if it (=> its title and link) matches one of the old feeds
-    is_completely_new = True
-    i = 0
-    for new_feed in new_feeds:
-        different = False
-        for old_feed in old_feeds:
-            if (new_feed.title == old_feed.title) or (new_feed.link == old_feed.link):
-                different = old_feed
-                is_completely_new = False
-                # We found the equivalent, break the loop
-                break
+    # Iterate through every website feed and check if it is new (its title or link does _not_ match one of the old
+    # feeds)
+    new_feeds = []
+    for website_feed in website_feeds:
+        # Compare pietsmiet.de feed against all feeds from db
+        if (find_feed_in_array(website_feed, db_feeds) is False) or force:
+            new_feeds.append(website_feed)
 
-        if not different or force:
+    if (len(new_feeds) >= limit) and not force:
+        # All feeds changed, means there was probably a gap inbetween => Reload all posts into db
+        # This should only happen if the script wasn't running for a few days
+        log("Posts in db too old, loading all posts in db")
+        fetch_and_store(scope, 25)
+    elif len(new_feeds) == 0:
+        # No new posts found => Database should be the same as pietsmiet.de now,
+        # so we can check if there are invalid posts in db
+        log("Info", "No new posts found for scope " + scope)
+        check_deleted_posts(db_feeds, website_feeds)
+
+        if scope == SCOPE_UPLOADPLAN:
+            # Also check if the uploadplan was edited
+            check_uploadplan_edited(find_feed_in_array(db_feeds[0], db_feeds), db_feeds[0])
+    else:
+        # Iterate through all new feeds and process them
+        i = 0
+        for new_feed in new_feeds:
             # New item found
             process_new_item(new_feed, scope, i)
-            time.sleep(2)
-        else:
-            # => This post was already in db
-
-            if i == 0:
-                # No new posts found this time
-                log("Info", "No new posts found for scope " + scope)
-                # Means we can check if there are invalid posts in db and if the uploadplan was edited
-
-                check_deleted_posts(old_feeds, new_feeds)
-                if scope == SCOPE_UPLOADPLAN:
-                    check_uploadplan_edited(different, new_feed)
-
-            # Don't iterate through older posts from rss if a single post inbetween was not new
-            # This is to prevent fcm spam on possible bugs (if there are other items in the same db)
-            break
-
-        i += 1
-
-    if is_completely_new and not force:
-        # All feeds changed, means there was probably a gap inbetween => Reload all posts into db
-        # This only happens if the script wasn't running for a few days
-        log("Posts in db too old, loading all posts in db")
-        fetch_and_store(scope, 15)
+            time.sleep(1)
+            i += 1
 
 
 def check_uploadplan_edited(old_feed, new_feed):
-    # Check if uploadplan desc changed if scope is uploadplan
+    # Check if uploadplan desc changed
     new_feed.desc = scrape_site(new_feed.link)
     if new_feed.desc != old_feed.desc:
         if old_feed.reddit_url is not None:
             edit_submission(format_text(new_feed), old_feed.reddit_url)
         else:
+            # Inform about missing reddit url and still store the new desc to avoid spam of this
             log("Warning", "No reddit url provided")
         # Put the updated desc back into db
         update_desc(new_feed)
 
 
-def check_deleted_posts(old_feeds, new_feeds):
+def check_deleted_posts(db_feeds, website_feeds):
     # Compare posts from db against the rss posts to make sure there are no deleted posts in the db
     i = 0
-    for old_feed in old_feeds:
+    for db_feed in db_feeds:
         i += 1
         is_deleted = True
-        for new_feed in new_feeds:
-            if (old_feed.title == new_feed.title) and (old_feed.date == new_feed.date) and (
-                        old_feed.link == new_feed.link):
+        for website_feed in website_feeds:
+            if (db_feed.title == website_feed.title) and (db_feed.date == website_feed.date) and (
+                        db_feed.link == website_feed.link):
                 is_deleted = False
                 # We found the equivalent, break the loop
                 break
@@ -121,30 +115,29 @@ def check_deleted_posts(old_feeds, new_feeds):
         if is_deleted:
             # There was no equivalent on pietsmiet.de, means it was probably deleted
             # => Remove it from the database
-            log("Feed with title '" + old_feed.title.encode('unicode_escape').decode('latin-1', 'ignore') +
-                "' was in db but not on pietsmiet.de. Deleting from database!")
+            log("Feed with title '" + db_feed.title + "' was in db but not on pietsmiet.de. Deleting from database!")
             if not debug:
-                delete_feed(old_feed)
-                remove_image_from_gcloud(old_feed)
+                delete_feed(db_feed)
+                remove_image_from_gcloud(db_feed)
         # Only compare db posts against the same size of pietsmiet.de posts
         # because there are more db posts loaded than pietsmiet.de posts
-        if i >= len(new_feeds):
+        if i >= len(website_feeds):
             break
 
 
-def process_new_item(new_feed, scope, i):
+def process_new_item(feed, scope, i):
     # Submit to firebase FCM & DB and if uploadplan to reddit 
-    log("Debug", "New item in " + new_feed.scope)
+    log("Debug", "New item in " + feed.scope)
     if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
         # Scrape site for the feed description
-        new_feed.desc = scrape_site(new_feed.link)
+        feed.desc = scrape_site(feed.link)
     if scope == SCOPE_NEWS:
-        # Truncrate the news description
-        new_feed.desc = smart_truncate(new_feed)
-    if (scope == SCOPE_VIDEO) and (new_feed.image_url is not None):
-        new_feed.image_url = store_image_in_gcloud(new_feed.image_url, new_feed)
+        # Truncate the news description
+        feed.desc = smart_truncate(feed)
+    if (scope == SCOPE_VIDEO) and (feed.image_url is not None):
+        feed.image_url = store_image_in_gcloud(feed.image_url, feed)
 
-    fcm_success = send_fcm(new_feed, debug)
+    fcm_success = send_fcm(feed, debug)
     if not fcm_success:
         log("Error", "Could not send FCM, aborting!")
 
@@ -152,17 +145,17 @@ def process_new_item(new_feed, scope, i):
         # Don't submit old uploadplan: Only if it's the first new_feed and new, submit it
         log("Submitting uploadplan to reddit")
         time.sleep(1)
-        r_url = submit_to_reddit(new_feed.title, format_text(new_feed), debug=debug)
+        r_url = submit_to_reddit(feed.title, format_text(feed), debug=debug)
         if not debug:
-            new_feed.reddit_url = r_url
+            feed.reddit_url = r_url
 
-    post_feed(new_feed)
+    post_feed(feed)
 
 
 def fetch_and_store(scope, limit):
-    new_feeds = parse_feed(scope, limit)
-    log("Loading " + str(len(new_feeds)) + " items in " + scope)
-    for feed in new_feeds:
+    website_feeds = parse_feed(scope, limit)
+    log("Loading " + str(len(website_feeds)) + " items in " + scope)
+    for feed in website_feeds:
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
             feed.desc = scrape_site(feed.link)
             time.sleep(1)

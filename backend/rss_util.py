@@ -18,6 +18,14 @@ class Feed(object):
         self.image_url = image_url
 
 
+def find_feed_in_array(feed, feed_list):
+    for feed_from_list in feed_list:
+        # Compare feed against all feeds from array
+        if (feed.title == feed_from_list.title) or (feed.link == feed_from_list.link):
+            return feed_from_list
+    return False
+
+
 def parse_feed(scope, limit):
     """
     Get's a feed from the scope url and parses it
