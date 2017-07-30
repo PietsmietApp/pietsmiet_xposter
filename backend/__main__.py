@@ -56,11 +56,13 @@ def check_for_update(scope):
 
     # Iterate through every website feed and check if it is new (its title or link does _not_ match one of the old
     # feeds)
-    new_feeds = []
+    new_feeds = {}
+    i = 0
     for website_feed in website_feeds:
         # Compare pietsmiet.de feed against all feeds from db
         if (find_feed_in_array(website_feed, db_feeds) is False) or force:
-            new_feeds.append(website_feed)
+            new_feeds[i] = website_feed
+        i += 1
 
     if (len(new_feeds) >= limit) and not force:
         # All feeds changed, means there was probably a gap inbetween => Reload all posts into db
@@ -75,15 +77,15 @@ def check_for_update(scope):
 
         if scope == SCOPE_UPLOADPLAN:
             # Also check if the uploadplan was edited
-            check_uploadplan_edited(find_feed_in_array(db_feeds[0], db_feeds), db_feeds[0])
+            website_feed = find_feed_in_array(db_feeds[0], website_feeds)
+            if website_feed is not False:
+                check_uploadplan_edited(db_feeds[0], website_feed)
     else:
         # Iterate through all new feeds and process them
-        i = 0
-        for new_feed in new_feeds:
+        for i, new_feed in new_feeds.items():
             # New item found
             process_new_item(new_feed, scope, i)
             time.sleep(1)
-            i += 1
 
 
 def check_uploadplan_edited(old_feed, new_feed):
