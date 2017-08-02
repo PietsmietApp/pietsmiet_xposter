@@ -104,8 +104,10 @@ def is_enabled():
     # Master switch to disable bot remotely
     try:
         result = firebase_db.get("/", "active")
-        if result is not None:
-            return result
+        if (result is None) or (not isinstance(result, bool)) or (result is False):
+            return False
+        else:
+            return True
     except Exception as e:
         log('Error getting active status from fb db' + format(e))
 
