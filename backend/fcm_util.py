@@ -67,7 +67,7 @@ def send_fcm(feed, debug=False):
 def get_uploadplan_from_desc(desc):
     # Only send the actual uploadplan
     match = re.search(
-        "\n(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{100,}?)(?:<br ?/?>)*</p>",
+        "(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{120,}?)(?:<br ?/?>)*<\/p>",
         desc,
         re.DOTALL)
     if match is not None:

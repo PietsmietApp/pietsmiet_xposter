@@ -92,6 +92,9 @@ def check_uploadplan_edited(old_feed, new_feed):
     # Check if uploadplan desc changed
     new_feed.desc = scrape_site(new_feed.link)
     if new_feed.desc != old_feed.desc:
+        if debug:
+            log("Desc has changed, not putting into db because of debug")
+            return
         if old_feed.reddit_url is not None:
             edit_submission(format_text(new_feed), old_feed.reddit_url)
         else:
