@@ -139,12 +139,23 @@ def process_new_item(feed, scope, i):
     if scope == SCOPE_NEWS:
         # Truncate the news description
         feed.desc = smart_truncate(feed)
-    if (scope == SCOPE_VIDEO) and (feed.image_url is not None):
-        feed.image_url = store_image_in_gcloud(feed.image_url, feed)
+    
+    if scope == SCOPE_VIDEO:
+        if feed.image_url is not None:
+            # Store thumb in gcloud and send fcm
+            feed.image_url = store_image_in_gcloud(feed.image_url, feed)
+            fcm_success = send_fcm(feed, debug)
+        else: 
+            # Don't send FCM as videos without thumbs are usually bad uploads and will be reuploaded
+            # Still store it in the DB if it just doesn't have a thumb for another reason
+            log("Warning", "No thumbnail found, means it's probably a bad upload. Not sending FCM!")
+            fcm_success = True 
+    else:
+        fcm_success = send_fcm(feed, debug)
 
-    fcm_success = send_fcm(feed, debug)
     if not fcm_success:
         log("Error", "Could not send FCM, aborting!")
+        return
 
     if (scope == SCOPE_UPLOADPLAN) and (i == 0):
         # Don't submit old uploadplan: Only if it's the first new_feed and new, submit it
@@ -153,7 +164,6 @@ def process_new_item(feed, scope, i):
         r_url = submit_to_reddit(feed.title, format_text(feed), debug=debug)
         if not debug:
             feed.reddit_url = r_url
-
     post_feed(feed)
 
 
