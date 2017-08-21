@@ -39,6 +39,7 @@ def check_for_update(scope):
     # Load more db items than new ones to compare better (e.g. if there are deleted items in the db)
     db_feed_limit = limit + 5
     db_feeds = get_last_feeds(scope, db_feed_limit)
+    
     # Check that loading of db posts was successful
     if db_feeds is None:
         log("Error", "Cannot retrieve old feeds! Aborting")
@@ -54,8 +55,8 @@ def check_for_update(scope):
         fetch_and_store(scope, 25)
         return
 
-    # Iterate through every website feed and check if it is new (its title or link does _not_ match one of the old
-    # feeds)
+    # Iterate through every website feed and check if it is new (its title or link does _not_ match 
+    # one of the old feeds)
     new_feeds = {}
     i = 0
     for website_feed in website_feeds:
@@ -162,9 +163,9 @@ def process_new_item(feed, scope, i):
         log("Submitting uploadplan to reddit")
         time.sleep(1)
         r_url = submit_to_reddit(feed.title, format_text(feed), debug=debug)
-        if not debug:
-            feed.reddit_url = r_url
-    post_feed(feed)
+        feed.reddit_url = r_url
+    if not debug:
+        post_feed(feed)
 
 
 def fetch_and_store(scope, limit):
@@ -178,29 +179,41 @@ def fetch_and_store(scope, limit):
             feed.desc = smart_truncate(feed)
         if (scope == SCOPE_VIDEO) and (feed.image_url is not None):
             feed.image_url = store_image_in_gcloud(feed.image_url, feed)
-        post_feed(feed)
+        if debug:
+            log ("Not posting to firebase because of debug")
+        else:
+            post_feed(feed)
         time.sleep(1)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-s", "--scope", required=False)
-parser.add_argument("-f", "--force", required=False, default=False, action='store_true')
-parser.add_argument("-d", "--debug", required=False, default=False, action='store_true')
-parser.add_argument("-a", "--loadall", required=False)
-parser.add_argument("-l", "--limit", required=False)
+parser.add_argument("-s", "--scope", required=False, choices=['uploadplan', 'news', 'video', 'pietcast', 'delete'],
+    help="The scope to load")
+parser.add_argument("-d", "--debug", required=False, default=False, action='store_true', 
+    help="This enables debug mode, which is basically a dry run. It'll not update the firebase db" + 
+            "and only submit FCMs to the debug channel and reddit posts to r/l3d00m")
+parser.add_argument("-f", "--force", required=False, default=False, action='store_true', 
+    help="This enables the dry run debug mode and simulates new posts even if there are no new posts.")
+parser.add_argument("-a", "--loadall", required=False, type=int,
+    help="(Re)loads the specified amount of posts in all scopes into the database. " + 
+            "Note: Limit for uploadplan, pietcast and news is always 8")
+parser.add_argument("-l", "--limit", required=False, type=int, choices=range(2, 20),
+    help="Set a custom limit how many posts should be compared.")
 args = parser.parse_args()
 
 if args.debug:
+    log("Debug enabled.")
     debug = True
 
 if args.force:
-    if debug:
-        force = True
-    else:
-        log("Error", "Force can only be used in debug mode (-d flag)")
-        sys.exit()
+    log("Debug and force enabled.")
+    force = True
+    debug = True
 
 if args.limit:
+    if args.loadall:
+        log("Limit ignored because it's specified in the --loadall parameter")
+    
     limit = int(args.limit)
     log("Info", "Limit set to " + str(limit))
 
@@ -228,5 +241,3 @@ elif args.scope == 'delete':
         delete_submission(url)
     else:
         log("Warning", "Couldn't delete submission, no URL in db")
-else:
-    log("Error", "No valid scope (--scope [uploadplan, news, video, delete, pietcast]) supplied!")
