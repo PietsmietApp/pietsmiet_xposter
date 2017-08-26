@@ -61,7 +61,8 @@ def parse_feed(scope, limit):
 def get_image_url(entry):
     try:
         for item in entry.media_content:
-            if item['type'] == "image/jpeg":
+            type = str(item['type'])
+            if type.startswith("image/"):
                 return item['url']
     except Exception:
         pass

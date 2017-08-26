@@ -149,7 +149,8 @@ def process_new_item(feed, scope, i):
         else: 
             # Don't send FCM as videos without thumbs are usually bad uploads and will be reuploaded
             # Still store it in the DB if it just doesn't have a thumb for another reason
-            log("Warning", "No thumbnail found, means it's probably a bad upload. Not sending FCM!")
+            log("Warning", "No thumbnail found, means it's probably a bad upload. Not sending FCM!" + 
+                    "Title is \"" + feed.title + "\"")
             fcm_success = True 
     else:
         fcm_success = send_fcm(feed, debug)
