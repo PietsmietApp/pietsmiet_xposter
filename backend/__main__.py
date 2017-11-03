@@ -18,10 +18,14 @@ from backend.log_util import log
 
 force = False
 debug = False
-limit = 6
+limit = -1
+
+default_post_limit = 6
+default_video_limit = 10
 
 
 def check_for_update(scope):
+    global limit
     # Check if master switch in db is off and abort if true
     if not is_enabled():
         if debug:
@@ -29,7 +33,14 @@ def check_for_update(scope):
         else:
             log("Warning", "Master switch is off, aborting")
             return
-
+    
+    # Set limit to default  if not set manually
+    if limit is -1:
+        if scope is "video":
+            limit = default_video_limit
+        else:
+            limit = default_post_limit
+        
     log("Checking for " + scope)
     website_feeds = parse_feed(scope, limit)
     if website_feeds is None:
