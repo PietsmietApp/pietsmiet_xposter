@@ -17,6 +17,8 @@ def send_fcm(feed, debug=False):
     # game = None
     if feed.scope == "uploadplan":
         message = get_uploadplan_from_desc(feed.desc)
+        if (len(re.findall(".*?<br.*?>", message)) > 6):
+            message = "<i>Diese Vorschau ist möglicherweise unvollständig:</i><br/>" + message
     elif feed.scope == "video":
         # Only send the title of the video (as message)
         title = "Neues Video (pietsmiet.de)"
