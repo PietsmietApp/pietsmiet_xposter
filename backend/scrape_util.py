@@ -52,8 +52,8 @@ def format_text(feed):
     text = re.sub(r" \*\*", "** ", m_text)
 
     text = '[Link zum PietSmiet.de-Artikel](' + link + ')\n\n' + \
-           text + '\n\n--- \n[Code des Bots](https://github.com/l3d00m/pietsmiet_xposter) | by /u/l3d00m  ' + \
-           '\n\n *Auch als Push-Benachrichtigung in der [Community App für Pietsmiet](' \
+           text + '\n\n--- \n[Code](https://github.com/PietsmietApp/pietsmiet_xposter) | ' + \
+           '*Auch als Push-Benachrichtigung in der [Community App für Pietsmiet](' \
            'https://play.google.com/store/apps/details?id=de.pscom.pietsmiet&referrer=utm_source%3Dreddit' \
            '%26utm_medium%3Duploadplan)* '
 
