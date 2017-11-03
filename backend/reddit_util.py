@@ -47,5 +47,12 @@ def delete_submission(submission_url):
         log("Warning", "DELETE: Submission url is empty")
         return
     submission = Submission(reddit_auth, url=submission_url)
-    submission.delete()
-    log("Submission deleted")
+    # Only remove the submission if there are less than 4 comments, otherwise unsticky
+    comment_count = len(submission.comments.list())
+    if (comment_count < 5):
+        submission.mod.remove()
+        submission.mod.lock()
+        log("Submission removed")
+    else:
+        submission.mod.sticky(False)
+        log("Submission unstickied")

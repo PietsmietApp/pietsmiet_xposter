@@ -1,4 +1,4 @@
-praw
+praw>5.0.0
 requests
 pyfcm
 python-firebase
