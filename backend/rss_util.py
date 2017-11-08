@@ -48,8 +48,9 @@ def parse_feed(scope, limit):
 
             t = parsedate(d.entries[x].published)
             # Store date as unix milliseconds timestamp so it can be easily parsed in Android
-            # Add two hours to fix wrong RSS timezone
-            date = int(time.mktime(t) + 7200) * 1000
+            # Add one hour to fix wrong RSS timezone in rss provided, because they didnt add the hour but indicated the given date was GMT+1 Timezone, thats wrong.
+            # Now the time represents the GMT timestamp.
+            date = int(time.mktime(t) + 3600) * 1000
 
             new_feeds.append(Feed(title=title, link=link, date=date, desc=desc, scope=scope, image_url=image_url))
         except IndexError:
