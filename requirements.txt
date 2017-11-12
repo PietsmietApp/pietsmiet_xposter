@@ -3,7 +3,7 @@ requests
 pyfcm
 python-firebase
 flask
-html2text
+html2text>=2017.10.4
 feedparser
 beautifulsoup4
 gcloud

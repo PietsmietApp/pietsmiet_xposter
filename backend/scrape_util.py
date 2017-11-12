@@ -46,10 +46,8 @@ def format_text(feed):
     :param feed: Feed to format
     :return: formatted text
     """
-    m_text = html2text.html2text(feed.desc)
+    text = html2text.html2text(feed.desc)
     link = feed.link
-
-    text = re.sub(r" \*\*", "** ", m_text)
 
     text = '[Link zum PietSmiet.de-Artikel](' + link + ')\n\n' + \
            text + '\n\n--- \n[Code](https://github.com/PietsmietApp/pietsmiet_xposter) | ' + \
