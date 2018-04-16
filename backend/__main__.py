@@ -44,8 +44,8 @@ def check_for_update(scope):
 
     log("Checking for " + scope)
     website_feeds = parse_feed(scope, limit)
-    if website_feeds is None:
-        log("Error", "Pietsmiet.de feeds are empty, bad network? Aborting")
+    if len(website_feeds) == 0:
+        log("Error", "Pietsmiet.de feeds are empty, bad network or site down? Aborting")
         return
 
     # Load more db items than new ones to compare better (e.g. if there are deleted items in the db)
