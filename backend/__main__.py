@@ -125,7 +125,7 @@ def check_deleted_posts(db_feeds, website_feeds):
         is_deleted = True
         for website_feed in website_feeds:
             if (db_feed.title == website_feed.title) and (db_feed.date == website_feed.date) and (
-                        db_feed.link == website_feed.link):
+                    db_feed.link == website_feed.link):
                 is_deleted = False
                 # We found the equivalent, break the loop
                 break
@@ -165,7 +165,7 @@ def process_new_item(feed, scope, i):
             # Don't send FCM as videos without thumbs are usually bad uploads and will be reuploaded
             # Still store it in the DB if it just doesn't have a thumb for another reason
             log("Warning", "No thumbnail found, means it's probably a bad upload. Not sending FCM!" +
-                    "Title is \"" + feed.title + "\"")
+                "Title is \"" + feed.title + "\"")
             fcm_success = True
     else:
         if nofcm is True:
@@ -187,8 +187,8 @@ def process_new_item(feed, scope, i):
         post_feed(feed)
 
 
-def fetch_and_store(scope, limit):
-    website_feeds = parse_feed(scope, limit)
+def fetch_and_store(scope, count):
+    website_feeds = parse_feed(scope, count)
     log("Loading " + str(len(website_feeds)) + " items in " + scope)
     for feed in website_feeds:
         if (scope == SCOPE_UPLOADPLAN) or (scope == SCOPE_NEWS):
@@ -199,7 +199,7 @@ def fetch_and_store(scope, limit):
         if (scope == SCOPE_VIDEO) and (feed.image_url is not None):
             feed.image_url = store_image_in_gcloud(feed.image_url, feed)
         if debug:
-            log ("Not posting to firebase because of debug")
+            log("Not posting to firebase because of debug")
         else:
             post_feed(feed)
         time.sleep(1)
@@ -207,19 +207,20 @@ def fetch_and_store(scope, limit):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--scope", required=False, choices=['uploadplan', 'news', 'video', 'pietcast', 'delete'],
-    help="The scope to load")
+                    help="The scope to load")
 parser.add_argument("-d", "--debug", required=False, default=False, action='store_true',
-    help="This enables debug mode, which is basically a dry run. It'll not update the firebase db" +
-            "and only submit FCMs to the debug channel and reddit posts to r/l3d00m")
+                    help="This enables debug mode, which is basically a dry run. It'll not update the firebase db" +
+                         "and only submit FCMs to the debug channel and reddit posts to r/l3d00m")
 parser.add_argument("-n", "--nofcm", required=False, default=False, action='store_true',
-    help="This enables no notification mode, which is basically a dry run. It'll not send notifications.")
+                    help="This enables no notification mode, which is basically a dry run. It'll not send "
+                         "notifications.")
 parser.add_argument("-f", "--force", required=False, default=False, action='store_true',
-    help="This enables the dry run debug mode and simulates new posts even if there are no new posts.")
+                    help="This enables the dry run debug mode and simulates new posts even if there are no new posts.")
 parser.add_argument("-a", "--loadall", required=False, type=int,
-    help="(Re)loads the specified amount of posts in all scopes into the database. " +
-            "Note: Limit for uploadplan, pietcast and news is always 8")
+                    help="(Re)loads the specified amount of posts in all scopes into the database. " +
+                         "Note: Limit for uploadplan, pietcast and news is always 8")
 parser.add_argument("-l", "--limit", required=False, type=int, choices=range(2, 20),
-    help="Set a custom limit how many posts should be compared.")
+                    help="Set a custom limit how many posts should be compared.")
 args = parser.parse_args()
 
 if args.debug:

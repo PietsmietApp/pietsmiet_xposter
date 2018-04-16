@@ -50,7 +50,7 @@ def parse_feed(scope, limit):
             # Store date as unix milliseconds timestamp so it can be easily parsed in Android
             # Timestamp should be GMT then
             # 1 hour is added to fix the time being wrong because of timezones etc.
-            date = int(time.mktime(t) + 3600 ) * 1000
+            date = int(time.mktime(t) + 3600) * 1000
 
             new_feeds.append(Feed(title=title, link=link, date=date, desc=desc, scope=scope, image_url=image_url))
         except IndexError:
@@ -62,8 +62,8 @@ def parse_feed(scope, limit):
 def get_image_url(entry):
     try:
         for item in entry.media_content:
-            type = str(item['type'])
-            if type.startswith("image/"):
+            item_type = str(item['type'])
+            if item_type.startswith("image/"):
                 return item['url']
     except Exception:
         pass

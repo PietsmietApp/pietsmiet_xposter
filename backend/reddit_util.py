@@ -49,7 +49,7 @@ def delete_submission(submission_url):
     submission = Submission(reddit_auth, url=submission_url)
     # Only remove the submission if there are less than 4 comments, otherwise unsticky
     comment_count = len(submission.comments.list())
-    if (comment_count < 5):
+    if comment_count < 5:
         submission.mod.remove()
         submission.mod.lock()
         log("Submission removed")

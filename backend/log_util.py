@@ -14,6 +14,7 @@ def log(*args):
 
     localtime = time.strftime('%d.%m. %H:%M:%S', time.localtime(time.time()))
     try:
-        print(("[" + localtime + "|" + level.upper() + "]: " + text).encode('unicode_escape').decode('latin-1', 'ignore'))
+        print(
+            ("[" + localtime + "|" + level.upper() + "]: " + text).encode('unicode_escape').decode('latin-1', 'ignore'))
     except Exception as e:
         print("You can't even log a text, wow. Exception is " + format(e))

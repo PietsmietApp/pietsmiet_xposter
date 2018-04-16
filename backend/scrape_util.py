@@ -22,16 +22,16 @@ def scrape_site(url):
         'Connection': 'keep-alive'}
     req = Request(url, headers=hdr)
     r = urlopen(req).read()
-    
+
     # Find all paragraphs in the "<article>" tag
     results = BeautifulSoup(r, 'html.parser').find("article").find_all("p")
-    
+
     # Combine all non empty paragraphs into one string
     result = ""
     for thing in results:
         if not str(thing.get_text()).isspace():
             result += str(thing)
-            
+
     # Additional whitespace removal:        
     # replace two linebreaks with one
     replaced = re.sub(r"(< ?br ?/?>){2}", "<br/>", result)

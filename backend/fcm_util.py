@@ -17,7 +17,7 @@ def send_fcm(feed, debug=False):
     # game = None
     if feed.scope == "uploadplan":
         message = get_uploadplan_from_desc(feed.desc)
-        if (len(re.findall(".*?<br.*?>", message)) > 6):
+        if len(re.findall(".*?<br.*?>", message)) > 6:
             message = "<i>Diese Vorschau ist möglicherweise unvollständig:</i><br/>" + message
     elif feed.scope == "video":
         # Only send the title of the video (as message)
@@ -69,7 +69,7 @@ def send_fcm(feed, debug=False):
 def get_uploadplan_from_desc(desc):
     # Only send the actual uploadplan
     match = re.search(
-        "(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{120,}?)(?:<br ?/?>)*<\/p>",
+        "(?:<p>)?(?:<strong>)?Upload-Plan am \d\d?\..*?(?:</strong>)?(?:<p>|<br ?/?>)(.{120,}?)(?:<br ?/?>)*</p>",
         desc,
         re.DOTALL)
     if match is not None:

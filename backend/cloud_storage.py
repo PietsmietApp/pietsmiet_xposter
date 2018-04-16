@@ -8,7 +8,7 @@ from backend.api_keys import cloud_client_id, cloud_client_email, cloud_private_
     cloud_bucket_name
 from backend.log_util import log
 from backend.firebase_db_util import get_id_of_feed
-    
+
 max_image_size = 4000000
 size = 512, 512
 image_path = "image.jpg"
@@ -58,7 +58,7 @@ def store_image_in_gcloud(url, feed):
         log("Warning", "Couldn't up- / download image" + format(e))
 
     return None
-    
+
 
 def remove_image_from_gcloud(feed):
     try:
@@ -73,4 +73,3 @@ def remove_image_from_gcloud(feed):
 
 def get_storage_path(feed):
     return "thumbs/" + feed.scope + "/" + get_id_of_feed(feed) + ".jpg"
-    
